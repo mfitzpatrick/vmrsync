@@ -7,19 +7,12 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 )
 
 var tripwatchAPIkey string
 var tripwatchURL string
-
-type tripwatchActivation struct {
-	ID      int       `json:"id"`
-	Created time.Time `json:"created_at"`
-	Updated time.Time `json:"updated_at"`
-}
 
 func tripwatchCall(ctx context.Context, method, url, body string) (*http.Response, error) {
 	if req, err := http.NewRequestWithContext(ctx,
@@ -37,27 +30,27 @@ func tripwatchCall(ctx context.Context, method, url, body string) (*http.Respons
 	}
 }
 
-func listActivations(ctx context.Context) ([]tripwatchActivation, error) {
+func listActivations(ctx context.Context) ([]linkActivationDB, error) {
 	ids := []struct {
 		ID int `json:"id"`
 	}{}
 	if resp, err := tripwatchCall(ctx, http.MethodGet, "/activations/recent", ""); err != nil {
-		return []tripwatchActivation{}, errors.Wrapf(err, "list activations call")
+		return []linkActivationDB{}, errors.Wrapf(err, "list activations call")
 	} else if body, err := ioutil.ReadAll(resp.Body); err != nil {
-		return []tripwatchActivation{}, errors.Wrapf(err, "list activations body read")
+		return []linkActivationDB{}, errors.Wrapf(err, "list activations body read")
 	} else if resp.StatusCode == http.StatusTooManyRequests {
-		return []tripwatchActivation{},
+		return []linkActivationDB{},
 			errors.Errorf("list activations too many requests")
 	} else if resp.StatusCode != http.StatusOK {
-		return []tripwatchActivation{},
+		return []linkActivationDB{},
 			errors.Errorf("list activations invalid status code %d", resp.StatusCode)
 	} else if err := json.Unmarshal([]byte(body), &ids); err != nil {
-		return []tripwatchActivation{}, errors.Wrapf(err, "list activations body parse")
+		return []linkActivationDB{}, errors.Wrapf(err, "list activations body parse")
 	} else {
-		actList := make([]tripwatchActivation, len(ids))
+		actList := make([]linkActivationDB, len(ids))
 		for _, v := range ids {
 			if a, err := getOneActivation(ctx, v.ID); err != nil {
-				return []tripwatchActivation{},
+				return []linkActivationDB{},
 					errors.Wrapf(err, "list activations get activation %d", v.ID)
 			} else {
 				actList = append(actList, a)
@@ -67,14 +60,14 @@ func listActivations(ctx context.Context) ([]tripwatchActivation, error) {
 	}
 }
 
-func getOneActivation(ctx context.Context, id int) (tripwatchActivation, error) {
-	activation := tripwatchActivation{}
+func getOneActivation(ctx context.Context, id int) (linkActivationDB, error) {
+	activation := linkActivationDB{}
 	if resp, err := tripwatchCall(ctx, http.MethodGet, fmt.Sprintf("/activation/%d", id), ""); err != nil {
-		return tripwatchActivation{}, errors.Wrapf(err, "get one activation call")
+		return linkActivationDB{}, errors.Wrapf(err, "get one activation call")
 	} else if body, err := ioutil.ReadAll(resp.Body); err != nil {
-		return tripwatchActivation{}, errors.Wrapf(err, "get one activation body read")
+		return linkActivationDB{}, errors.Wrapf(err, "get one activation body read")
 	} else if err := json.Unmarshal([]byte(body), &activation); err != nil {
-		return tripwatchActivation{}, errors.Wrapf(err, "get one activation body parse")
+		return linkActivationDB{}, errors.Wrapf(err, "get one activation body parse")
 	} else {
 		return activation, nil
 	}
