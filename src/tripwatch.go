@@ -67,7 +67,7 @@ func getOneActivation(ctx context.Context, id int) (linkActivationDB, error) {
 	} else if body, err := ioutil.ReadAll(resp.Body); err != nil {
 		return linkActivationDB{}, errors.Wrapf(err, "get one activation body read")
 	} else if err := json.Unmarshal([]byte(body), &activation); err != nil {
-		return linkActivationDB{}, errors.Wrapf(err, "get one activation body parse")
+		return linkActivationDB{}, errors.Wrapf(err, "get one activation body parse '%s'", body)
 	} else {
 		return activation, nil
 	}

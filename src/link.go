@@ -15,7 +15,7 @@ import (
 
 type Vessel struct {
 	ID             int    `firebird:"JOBDUTYVESSELNO" json:"activationsrvsequence"`
-	Name           string `firebird:"JOBDUTYVESSELNAME" json:"activationsrvvessel"`
+	Name           string `firebird:"JOBDUTYVESSELNAME,match" json:"activationsrvvessel"`
 	StartHoursPort int    `firebird:"JOBHOURSSTART" json:"activationsrvenginehours1start"`
 	StartHoursStbd int    `json:"activationsrvenginehours2start"`
 	EndHoursPort   int    `firebird:"JOBHOURSEND" json:"activationsrvenginehours1end"`
@@ -23,8 +23,9 @@ type Vessel struct {
 }
 
 type Job struct {
-	StartTime time.Time `firebird:"JOBTIMEOUT" json:"activationsrvdeparttime"`
+	StartTime time.Time `firebird:"JOBTIMEOUT,match" json:"activationsrvdeparttime"`
 	EndTime   time.Time `firebird:"JOBTIMEIN" json:"activationsrvreturntime"`
+	SeaState  string    `firebird:"JOBSEAS" json:"activationsobservedseastate"`
 	Vessel
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"reflect"
 	"testing"
 	"time"
@@ -54,4 +55,39 @@ func TestFirebirdGetRequests(t *testing.T) {
 	db := linkActivationDB{}
 	err := firebirdGet(&db)
 	assert.Nil(t, err)
+}
+
+func TestForEachCol(t *testing.T) {
+	db := &linkActivationDB{
+		ID: 42,
+		Job: Job{
+			StartTime: time.Now(),
+			Vessel: Vessel{
+				ID:   1,
+				Name: "MR1",
+			},
+		},
+	}
+	mainObj := reflect.ValueOf(*db)
+	err := forEachColumn("parent", mainObj, func(tableName, colName string, isKey bool, item interface{}) error {
+		log.Printf("item for %s.%s is %v", tableName, colName, item)
+		return nil
+	})
+	assert.Nil(t, err)
+}
+
+func TestBuildInsertStatements(t *testing.T) {
+	db := &linkActivationDB{
+		ID: 42,
+		Job: Job{
+			StartTime: time.Now(),
+			Vessel: Vessel{
+				ID:   1,
+				Name: "MR1",
+			},
+		},
+	}
+	stmtList, err := buildInsertStatements(db)
+	assert.Nil(t, err)
+	assert.Less(t, 0, len(stmtList))
 }

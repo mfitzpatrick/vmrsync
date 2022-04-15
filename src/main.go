@@ -22,9 +22,12 @@ func openConfig() error {
 }
 
 func main() {
-	conn, _ := openDB()
-	defer conn.Close()
-	if err := openConfig(); err != nil {
-		log.Fatalf("Config parsing failed: %v", err)
+	if conn, err := openDB(); err != nil {
+		log.Fatalf("Unable to open DB: %v", err)
+	} else {
+		defer conn.Close()
+		if err := openConfig(); err != nil {
+			log.Fatalf("Config parsing failed: %v", err)
+		}
 	}
 }
