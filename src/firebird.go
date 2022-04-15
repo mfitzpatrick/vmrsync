@@ -9,9 +9,9 @@ import (
 )
 
 // Recursive function which will generate a map of tables to a list of struct fields
-func getFirebirdStructTags(tableName string, obj reflect.Type) (map[string][]string, error) {
-	fieldList := []string{}
-	tmap := make(map[string][]string)
+func getFirebirdStructTags(tableName string, obj reflect.Type) (map[string]map[string]reflect.Type, error) {
+	fields := make(map[string]reflect.Type)
+	tmap := make(map[string]map[string]reflect.Type)
 	for i := 0; i < obj.NumField(); i++ {
 		structField := obj.Field(i)
 		firebirdTag := structField.Tag.Get("firebird")
@@ -30,15 +30,17 @@ func getFirebirdStructTags(tableName string, obj reflect.Type) (map[string][]str
 		} else if firebirdTag == "" {
 			continue //Nothing here matches with the firebird DB
 		} else {
-			fieldList = append(fieldList, firebirdTag)
+			fields[firebirdTag] = structField.Type
 		}
 	}
 	if v, ok := tmap[tableName]; ok {
 		// Extend field list
-		fieldList = append(fieldList, v...)
+		for k, field := range v {
+			fields[k] = field
+		}
 	}
-	if len(fieldList) > 0 {
-		tmap[tableName] = fieldList
+	if len(fields) > 0 {
+		tmap[tableName] = fields
 	}
 	return tmap, nil
 }

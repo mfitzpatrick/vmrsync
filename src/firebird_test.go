@@ -11,10 +11,10 @@ import (
 type VesselTest struct {
 	ID             int    `firebird:"JOBDUTYVESSELNO" json:"activationsrvsequence"`
 	Name           string `firebird:"JOBDUTYVESSELNAME" json:"activationsrvvessel"`
-	StartHoursPort string `firebird:"JOBHOURSSTART" json:"activationsrvenginehours1start"`
-	StartHoursStbd string `json:"activationsrvenginehours2start"`
-	EndHoursPort   string `firebird:"JOBHOURSEND" json:"activationsrvenginehours1end"`
-	EndHoursStbd   string `json:"activationsrvenginehours2end"`
+	StartHoursPort int    `firebird:"JOBHOURSSTART" json:"activationsrvenginehours1start"`
+	StartHoursStbd int    `json:"activationsrvenginehours2start"`
+	EndHoursPort   int    `firebird:"JOBHOURSEND" json:"activationsrvenginehours1end"`
+	EndHoursStbd   int    `json:"activationsrvenginehours2end"`
 }
 
 type JobTest struct {
@@ -38,10 +38,15 @@ func TestStructTagParsing(t *testing.T) {
 	tableMap, err := getFirebirdStructTags("parent", mainObj)
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(tableMap))
-	expect := make(map[string][]string)
-	expect["DUTYJOBS"] = []string{"JOBTIMEOUT", "JOBTIMEIN",
-		"JOBDUTYVESSELNO", "JOBDUTYVESSELNAME",
-		"JOBHOURSSTART", "JOBHOURSEND"}
+	expect := make(map[string]map[string]reflect.Type)
+	expect["DUTYJOBS"] = map[string]reflect.Type{
+		"JOBTIMEOUT":        reflect.ValueOf(time.Time{}).Type(),
+		"JOBTIMEIN":         reflect.ValueOf(time.Time{}).Type(),
+		"JOBDUTYVESSELNO":   reflect.ValueOf(0).Type(),
+		"JOBDUTYVESSELNAME": reflect.ValueOf("").Type(),
+		"JOBHOURSSTART":     reflect.ValueOf(0).Type(),
+		"JOBHOURSEND":       reflect.ValueOf(0).Type(),
+	}
 	assert.Equal(t, expect, tableMap)
 }
 
