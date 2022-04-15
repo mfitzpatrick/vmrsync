@@ -1,7 +1,7 @@
 -- SQL file for configuring some testing initial data with the
 -- VMRMEMBERS Firebird database
 
-CONNECT 'VMRMEMBERS.FDB';
+CONNECT '/firebird/data/VMRMEMBERS.FDB';
 
 INSERT INTO CREWS (CREWNAME,BOATCREW) VALUES ('GREEN', 'Y');
 INSERT INTO CREWS (CREWNAME,BOATCREW) VALUES ('WHITE', 'Y');

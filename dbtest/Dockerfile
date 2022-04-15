@@ -1,4 +1,4 @@
-FROM jacobalberty/firebird:v2.5
+FROM jacobalberty/firebird:v2.5.9-sc
 
 ENV ISC_PASSWORD=vmrdbpass
 
