@@ -19,18 +19,20 @@ func TestIntegManualTripwatchGet(t *testing.T) {
 	req.Header.Add("Authorization", "Bearer "+tripwatchAPIkey)
 	c := http.Client{}
 	resp, err := c.Do(req)
-	assert.Nil(t, err)
-	body, err := ioutil.ReadAll(resp.Body)
-	assert.Nil(t, err)
-	assert.NotEqual(t, "", string(body))
+	if assert.Nil(t, err) {
+		body, err := ioutil.ReadAll(resp.Body)
+		assert.Nil(t, err)
+		assert.NotEqual(t, "", string(body))
+	}
 }
 
 func TestIntegTripwatchCallHelper(t *testing.T) {
 	resp, err := tripwatchCall(context.Background(), http.MethodGet, "/activations/recent", "")
-	assert.Nil(t, err)
-	body, err := ioutil.ReadAll(resp.Body)
-	assert.Nil(t, err)
-	assert.NotEqual(t, "", string(body))
+	if assert.Nil(t, err) {
+		body, err := ioutil.ReadAll(resp.Body)
+		assert.Nil(t, err)
+		assert.NotEqual(t, "", string(body))
+	}
 }
 
 func TestIntegTripwatchListActivations(t *testing.T) {

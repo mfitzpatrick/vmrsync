@@ -14,6 +14,10 @@ import (
 var tripwatchAPIkey string
 var tripwatchURL string
 
+var (
+	twNotFound = errors.Errorf("TripWatch item not found")
+)
+
 func tripwatchCall(ctx context.Context, method, url, body string) (*http.Response, error) {
 	if req, err := http.NewRequestWithContext(ctx,
 		method, tripwatchURL+url, strings.NewReader(body),
@@ -24,6 +28,8 @@ func tripwatchCall(ctx context.Context, method, url, body string) (*http.Respons
 		c := http.Client{}
 		if resp, err := c.Do(req); err != nil {
 			return &http.Response{}, errors.Wrapf(err, "tripwatch call execute")
+		} else if resp.StatusCode == 404 {
+			return &http.Response{}, errors.Wrapf(twNotFound, "tripwatch call")
 		} else {
 			return resp, nil
 		}
@@ -62,12 +68,12 @@ func listActivations(ctx context.Context) ([]linkActivationDB, error) {
 
 func getOneActivation(ctx context.Context, id int) (linkActivationDB, error) {
 	activation := linkActivationDB{}
-	if resp, err := tripwatchCall(ctx, http.MethodGet, fmt.Sprintf("/activation/%d", id), ""); err != nil {
-		return linkActivationDB{}, errors.Wrapf(err, "get one activation call")
+	if resp, err := tripwatchCall(ctx, http.MethodGet, fmt.Sprintf("/activations/%d", id), ""); err != nil {
+		return linkActivationDB{}, errors.Wrapf(err, "get one activation call for ID %d", id)
 	} else if body, err := ioutil.ReadAll(resp.Body); err != nil {
-		return linkActivationDB{}, errors.Wrapf(err, "get one activation body read")
+		return linkActivationDB{}, errors.Wrapf(err, "get one activation body read for ID %d", id)
 	} else if err := json.Unmarshal([]byte(body), &activation); err != nil {
-		return linkActivationDB{}, errors.Wrapf(err, "get one activation body parse '%s'", body)
+		return linkActivationDB{}, errors.Wrapf(err, "get one activation body parse for ID %d '%s'", id, body)
 	} else {
 		return activation, nil
 	}

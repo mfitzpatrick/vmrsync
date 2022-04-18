@@ -156,23 +156,29 @@ func buildInsertStatements(db *linkActivationDB) (map[string][]interface{}, erro
 }
 
 func runStatements(ctx context.Context, db *sql.DB, statements map[string][]interface{}) error {
+	// Helper function to wrap an error and rollback the current SQL transaction
+	rollbackWrapf := func(tx *sql.Tx, err error, format string, args ...interface{}) error {
+		if rbErr := tx.Rollback(); rbErr != nil {
+			rbstr := fmt.Sprintf("rollback error (%s)", err.Error())
+			return errors.Wrapf(err, rbstr+format, args...)
+		}
+		return errors.Wrapf(err, format, args...)
+	}
+
 	if txn, err := db.BeginTx(ctx, &sql.TxOptions{}); err != nil {
 		return errors.Wrapf(err, "run DB statements txn begin")
 	} else {
 		for stmt, args := range statements {
 			if result, err := txn.ExecContext(ctx, stmt, args...); err != nil {
-				if rbErr := txn.Rollback(); rbErr != nil {
-					return errors.Wrapf(rbErr, "rollback DB statements failed after exec error (%s)", err.Error())
-				}
-				return errors.Wrapf(err, "run DB statement '%s'", stmt)
+				return rollbackWrapf(txn, err, "run DB statement: '%s'", stmt)
 			} else if rowCount, err := result.RowsAffected(); err != nil {
-				return errors.Wrapf(err, "run DB statements get result rows")
+				return rollbackWrapf(txn, err, "run DB statements get result rows")
 			} else if rowCount != 1 {
-				return errors.Errorf("run DB statements should update or insert 1 row")
+				return rollbackWrapf(txn, errors.Errorf("run DB statements should update or insert 1 row"), "")
 			}
 		}
 		if txn.Commit(); err != nil {
-			return errors.Wrapf(err, "commit DB statements")
+			return rollbackWrapf(txn, err, "commit DB statements")
 		}
 	}
 	return nil

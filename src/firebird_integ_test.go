@@ -44,7 +44,7 @@ func TestRunInsertStatements(t *testing.T) {
 	dbObj := &linkActivationDB{
 		ID: 42,
 		Job: Job{
-			StartTime: getTimeUTC(t, "2022-01-01T06:00:35Z"),
+			StartTime: CustomJSONTime(getTimeUTC(t, "2022-01-01T06:00:35Z")),
 			SeaState:  "calm",
 			Vessel: Vessel{
 				ID:   2,

@@ -1,0 +1,218 @@
+{
+	"info": {
+		"_postman_id": "9bfa86dd-4ce7-4269-897a-2326ff508f5e",
+		"name": "TripWatch",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "List Activations",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://tripwatch-training.platformrescue.com.au/api/activations/recent",
+					"protocol": "https",
+					"host": [
+						"tripwatch-training",
+						"platformrescue",
+						"com",
+						"au"
+					],
+					"path": [
+						"api",
+						"activations",
+						"recent"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "List Activations OK",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/activations/recent",
+							"path": [
+								"api",
+								"activations",
+								"recent"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, private"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Mar 2022 08:23:33 GMT"
+						},
+						{
+							"key": "X-RateLimit-Limit",
+							"value": "0"
+						},
+						{
+							"key": "X-RateLimit-Remaining",
+							"value": "-1"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=31536000; includeSubDomains"
+						}
+					],
+					"cookie": [],
+					"body": "[\n    {\n        \"id\": 86239\n    }\n]"
+				}
+			]
+		},
+		{
+			"name": "Get Activation",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://tripwatch-training.platformrescue.com.au/api/activations/{{activation_id}}",
+					"protocol": "https",
+					"host": [
+						"tripwatch-training",
+						"platformrescue",
+						"com",
+						"au"
+					],
+					"path": [
+						"api",
+						"activations",
+						"{{activation_id}}"
+					]
+				}
+			},
+			"response": [
+				{
+					"name": "Get Activation",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "/api/activations/86239",
+							"path": [
+								"api",
+								"activations",
+								"86239"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Server",
+							"value": "nginx"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Transfer-Encoding",
+							"value": "chunked"
+						},
+						{
+							"key": "Connection",
+							"value": "keep-alive"
+						},
+						{
+							"key": "Cache-Control",
+							"value": "no-cache, private"
+						},
+						{
+							"key": "Date",
+							"value": "Tue, 22 Mar 2022 08:24:58 GMT"
+						},
+						{
+							"key": "X-RateLimit-Limit",
+							"value": "0"
+						},
+						{
+							"key": "X-RateLimit-Remaining",
+							"value": "-1"
+						},
+						{
+							"key": "X-Frame-Options",
+							"value": "SAMEORIGIN"
+						},
+						{
+							"key": "Strict-Transport-Security",
+							"value": "max-age=31536000; includeSubDomains"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"id\": 86239,\n    \"created_at\": \"2022-03-12T12:30:31.000000Z\",\n    \"updated_at\": \"2022-03-21T09:38:01.000000Z\",\n    \"activationsunitcode\": \"VMR SOUTHPORT\",\n    \"activationsdate\": \"2022-03-21 12:30:00\",\n    \"activationssortdate\": \"2022-03-12 13:30:00\",\n    \"activationsstatus\": \"InProgress\",\n    \"activationssource\": \"Coast Guard\",\n    \"activationstype\": \"Training\",\n    \"activationslocation\": \"Inaminka Shoals\",\n    \"activationsposition\": \"0 0\",\n    \"activationspolicenotified\": \"No\",\n    \"activationspolicenotifiedcontact\": null,\n    \"activationspolicenotifiedtime\": null,\n    \"activationsqasattending\": \"null\",\n    \"activationsrvvessel\": \"MARINERESCUE1\",\n    \"activationsrvsequence\": 1,\n    \"activationsrvteam\": null,\n    \"activationsrvmaster\": \"matt.fitzpatrick@mrq.org.au\",\n    \"activationsrvmasterphone\": null,\n    \"activationsrvcrew\": \"[\\\"ray.spiteri@mrq.org.au\\\"]\",\n    \"activationsrvpob\": 2,\n    \"activationsrvdeparttime\": \"2022-03-12 12:30:00\",\n    \"activationsrvetr\": \"2022-03-12 13:30:00\",\n    \"activationsrvreturntime\": \"2022-03-12 12:30:00\",\n    \"activationsrvenginehours1start\": \"1.0\",\n    \"activationsrvenginehours1end\": null,\n    \"activationsrvenginehours2start\": \"1.0\",\n    \"activationsrvenginehours2end\": null,\n    \"activationsrvenginehours3start\": null,\n    \"activationsrvenginehours3end\": null,\n    \"activationsdvonlogs\": \"\",\n    \"activationsrvonlogs\": \"\",\n    \"activationsactivationhightidetime\": \"[Gold Coast Seaway -> 13/03/2022 (Sun) @ 05:03 -> high -> 1.40]\",\n    \"activationsactivationhightideheight\": null,\n    \"activationsactivationlowtidetime\": null,\n    \"activationsactivationlowtideheight\": null,\n    \"activationsactivationweatherforecast\": \"[Byron Coast: Point Danger to Wooli, Winds:  Southeasterly 10 to 15 knots, reaching up to 20 knots north of Yamba in the evening.\\r\\n Seas:  Around 1 metre, increasing to 1 to 1.5 metres offshore north of Cape Byron.\\r\\n Swell1:  Southerly around 1 metre inshore, increasing to 1.5 metres offshore.\\r\\n Swell2:  Easterly 1.5 metres.\\r\\n Weather:  Mostly clear.\\r\\n] [Moreton Bay, Winds:  South to southeasterly 15 to 20 knots.\\r\\n Seas:  Around 1 metre, increasing to 1 to 1.5 metres in the northern bay.\\r\\n Weather:  Partly cloudy. 40% chance of showers over the eastern bay during the evening.\\r\\n] [Gold Coast Waters: Cape Moreton to Point Danger, Winds:  South to southeasterly 15 to 20 knots.\\r\\n Seas:  1.5 metres.\\r\\n Swell1:  Easterly around 1 metre inshore, increasing to 1.5 metres offshore.\\r\\n Swell2:  Southerly below 1 metre inshore, increasing to 1 to 1.5 metres offshore.\\r\\n Weather:  Partly cloudy. 40% chance of showers offshore.\\r\\n]\",\n    \"activationsdvvesselsname\": null,\n    \"activationsdvvesselsregistration\": \"\",\n    \"activationsdvcallsign\": null,\n    \"activationsdvvesselsmake\": null,\n    \"activationsdvvesselsmodel\": null,\n    \"activationsdvvesselsyear\": null,\n    \"activationsdvvesselstype\": null,\n    \"activationsdvvesselslength\": null,\n    \"activationsdvvesselsenginetype\": null,\n    \"activationsdvvesselsenginequantity\": null,\n    \"activationsdvvesselshullmaterial\": null,\n    \"activationsdvvesselsenginebrand\": null,\n    \"activationsdvvesselsenginesize\": null,\n    \"activationsdvdescription\": null,\n    \"activationsdvvesselssailmarkings\": null,\n    \"activationsdvvesselssailcolour\": null,\n    \"activationsdvvesselscolourtopside\": null,\n    \"activationsdvvesselscolourhull\": null,\n    \"activationsdvvesselsmmsi\": null,\n    \"activationsdvnatureofproblem\": null,\n    \"activationsdvactionrequested\": null,\n    \"activationsdvcontactname\": null,\n    \"activationsdvcontactemail\": null,\n    \"activationsdvcontactaddress1\": null,\n    \"activationsdvcontactaddress2\": null,\n    \"activationsdvcontactcity\": null,\n    \"activationsdvcontactstate\": null,\n    \"activationsdvcontactpostcode\": null,\n    \"activationsdvcontactnumber\": null,\n    \"activationsdvpobadult\": null,\n    \"activationsdvpobchildren\": null,\n    \"activationsdvvesselsonboardradios\": null,\n    \"activationsdvradiochannel\": null,\n    \"activationsdvhomeport\": null,\n    \"activationsdvhomeberth\": null,\n    \"activationsdvanchored\": null,\n    \"activationsdvinsurancecompany\": null,\n    \"activationsdvestimatedvalue\": null,\n    \"activationsdvassistedat\": null,\n    \"activationsdvassistedto\": null,\n    \"activationscost\": null,\n    \"activationsdonationreceived\": null,\n    \"activationsdonationreceiptnumber\": null,\n    \"activationsdonationreceiptgiven\": null,\n    \"activationsworkflow\": null,\n    \"activationscomments\": null,\n    \"activationsupdatedby\": \"ricky.mcgowan@coastguard.com.au\",\n    \"activationsonshorecontactname\": null,\n    \"activationsonshorecontactphone\": null,\n    \"activationspurpose\": \"Training\",\n    \"activationsbar\": null,\n    \"activationscontacttime\": null,\n    \"activationscontactnote\": null,\n    \"activationsbarwithdv\": null,\n    \"activationscrossingbar\": null,\n    \"activationslocationreceivedalert\": null,\n    \"activationssmsreceivedalert\": null,\n    \"activationspoliceincidentnumber\": null,\n    \"mars_id\": null,\n    \"marstaskings_id\": null,\n    \"activationsmarstaskinghistory\": null,\n    \"activationsretaskingtag\": null,\n    \"activationssitreprequesttag\": null,\n    \"activationsstanddowntag\": null,\n    \"activationsupdatedtag\": null,\n    \"activationstvaislocationreceivedalert\": null,\n    \"activationsrvaislocationreceivedalert\": null,\n    \"activationsaistrack\": \"NO\",\n    \"activationsrvguest1\": null,\n    \"activationsrvguest2\": null,\n    \"activationsrvguest3\": null,\n    \"activationsrvguest4\": null,\n    \"activationsrvguest5\": null,\n    \"activationsrvguest6\": null,\n    \"activationsrvguest7\": null,\n    \"activationsrvguest8\": null,\n    \"activationsobservedseastate\": null,\n    \"activationsrvhelmsperson1\": null,\n    \"activationsrvhelmsperson1hours\": \"0.0\",\n    \"activationsrvhelmsperson2\": null,\n    \"activationsrvhelmsperson2hours\": \"0.0\",\n    \"activationsrvhelmsperson3\": null,\n    \"activationsrvhelmsperson3hours\": \"0.0\",\n    \"activationsrvhelmsperson4\": null,\n    \"activationsrvhelmsperson4hours\": \"0.0\",\n    \"activationsrvhelmsperson5\": null,\n    \"activationsrvhelmsperson5hours\": \"0.0\",\n    \"activationsrvhelmsperson6\": null,\n    \"activationsrvhelmsperson6hours\": \"0.0\",\n    \"activationsrvhelmsperson7\": null,\n    \"activationsrvhelmsperson7hours\": \"0.0\",\n    \"activationsrvhelmsperson8\": null,\n    \"activationsrvhelmsperson8hours\": \"0.0\",\n    \"activationsrvmasterhelmhours\": \"0.0\",\n    \"activationsfuelused\": null,\n    \"activationsrvguest9\": null,\n    \"activationsrvguest10\": null,\n    \"activationsrvguest11\": null,\n    \"activationsrvguest12\": null,\n    \"activationshistoricalid\": null,\n    \"activationscrewrole1\": null,\n    \"activationscrewmemberrole1\": null,\n    \"activationscrewrole2\": null,\n    \"activationscrewmemberrole2\": null,\n    \"activationscrewrole3\": null,\n    \"activationscrewmemberrole3\": null,\n    \"activationscrewrole4\": null,\n    \"activationscrewmemberrole4\": null,\n    \"activationscrewrole5\": null,\n    \"activationscrewmemberrole5\": null,\n    \"activationscrewrole6\": null,\n    \"activationscrewmemberrole6\": null,\n    \"activationscrewrole7\": null,\n    \"activationscrewmemberrole7\": null,\n    \"activationscrewrole8\": null,\n    \"activationscrewmemberrole8\": null,\n    \"activationsoperationsareaclassification\": null\n}"
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "1|kCSm9VRwieJzqTlpOYGsWQdyygzepAfO0alsqGMI",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "activation_id",
+			"value": "",
+			"type": "default"
+		}
+	]
+}

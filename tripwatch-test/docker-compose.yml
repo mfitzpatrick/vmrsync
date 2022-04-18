@@ -1,0 +1,14 @@
+version: "3"
+
+services:
+  tripwatch_test:
+    image: ghcr.io/mfitzpatrick/postman-mockserver:latest
+    volumes:
+      - ./TripWatch.postman_collection.json:/app/config/collection.json
+    ports:
+      - "8888:8080"
+    networks:
+      default:
+        aliases:
+          - tripwatch_test.dcompose
+

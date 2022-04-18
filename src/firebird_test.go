@@ -61,7 +61,7 @@ func TestForEachCol(t *testing.T) {
 	db := &linkActivationDB{
 		ID: 42,
 		Job: Job{
-			StartTime: time.Now(),
+			StartTime: CustomJSONTime(time.Now()),
 			Vessel: Vessel{
 				ID:   1,
 				Name: "MR1",
@@ -80,7 +80,7 @@ func TestBuildInsertStatements(t *testing.T) {
 	db := &linkActivationDB{
 		ID: 42,
 		Job: Job{
-			StartTime: time.Now(),
+			StartTime: CustomJSONTime(time.Now()),
 			Vessel: Vessel{
 				ID:   1,
 				Name: "MR1",
