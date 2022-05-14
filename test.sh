@@ -29,10 +29,16 @@ if [ "$test_type" = "unit" ]; then
 fi
 
 if [ "$test_type" = "integration" ]; then
+    cd "$BASE/src"
+    CONFIG_FILE="$BASE/tripwatch-test/test-config.yml" go test -tags integration -o "$BASE/testbin" -c
+    test_result=$?
+    if [ "0" != "$test_result" ]; then
+        echo "Go test build failure: $test_result"
+        exit 1
+    fi
     sh "$BASE/dbtest/start.sh"
     docker-compose -f "$BASE/tripwatch-test/docker-compose.yml" up -d
-    cd "$BASE/src"
-    CONFIG_FILE="$BASE/tripwatch-test/test-config.yml" go test -tags integration
+    "$BASE/testbin"
     test_result=$?
     docker-compose -f "$BASE/dbtest/docker-compose.yml" -f "$BASE/tripwatch-test/docker-compose.yml" logs
     if [ -n "$MANUALDB" ]; then
@@ -40,6 +46,7 @@ if [ "$test_type" = "integration" ]; then
     fi
     docker-compose -f "$BASE/dbtest/docker-compose.yml" down --rmi all
     docker-compose -f "$BASE/tripwatch-test/docker-compose.yml" down
+    rm "$BASE/testbin
     exit $test_result
 fi
 
