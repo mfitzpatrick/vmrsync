@@ -2,7 +2,9 @@ package main
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -28,4 +30,13 @@ func TestNestedStructJSONUnmarshal(t *testing.T) {
 			StartTime: CustomJSONTime(getTime(t, "2022-03-12T12:35:00.000000Z")),
 		},
 	}, link)
+}
+
+func TestCustomTimeZero(t *testing.T) {
+	tm := getTimeUTC(t, "2000-11-11T13:14:15Z")
+	ctm := CustomJSONTime(tm)
+	assert.False(t, tm.IsZero())
+	assert.False(t, time.Time(ctm).IsZero())
+	assert.False(t, reflect.ValueOf(tm).IsZero())
+	assert.False(t, reflect.ValueOf(ctm).IsZero())
 }

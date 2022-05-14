@@ -31,32 +31,6 @@ type testParent struct {
 	JobTest `firebird:"DUTYJOBS"`
 }
 
-// Example nested struct tag parsing
-func TestStructTagParsing(t *testing.T) {
-	parent := testParent{}
-	mainObj := reflect.TypeOf(parent)
-	assert.Equal(t, reflect.Struct, mainObj.Kind())
-	tableMap, err := getFirebirdStructTags("parent", mainObj)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(tableMap))
-	expect := make(map[string]map[string]reflect.Type)
-	expect["DUTYJOBS"] = map[string]reflect.Type{
-		"JOBTIMEOUT":        reflect.ValueOf(time.Time{}).Type(),
-		"JOBTIMEIN":         reflect.ValueOf(time.Time{}).Type(),
-		"JOBDUTYVESSELNO":   reflect.ValueOf(0).Type(),
-		"JOBDUTYVESSELNAME": reflect.ValueOf("").Type(),
-		"JOBHOURSSTART":     reflect.ValueOf(0).Type(),
-		"JOBHOURSEND":       reflect.ValueOf(0).Type(),
-	}
-	assert.Equal(t, expect, tableMap)
-}
-
-func TestFirebirdGetRequests(t *testing.T) {
-	db := linkActivationDB{}
-	err := firebirdGet(&db)
-	assert.Nil(t, err)
-}
-
 func TestForEachCol(t *testing.T) {
 	db := &linkActivationDB{
 		ID: 42,

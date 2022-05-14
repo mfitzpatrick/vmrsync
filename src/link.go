@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql/driver"
 	"encoding/json"
 	"strconv"
 	"strings"
@@ -59,6 +60,14 @@ func (t *CustomJSONTime) UnmarshalJSON(bytes []byte) error {
 	} else {
 		return errors.Wrapf(err, "custom unmarshaler failed with time string '%s'", string(bytes))
 	}
+}
+
+func (tm CustomJSONTime) String() string {
+	return time.Time(tm).String()
+}
+
+func (tm CustomJSONTime) Value() (driver.Value, error) {
+	return time.Time(tm), nil
 }
 
 type IntString float32 //TripWatch floating-point number contained in a string

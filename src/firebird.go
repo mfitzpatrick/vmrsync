@@ -4,10 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"reflect"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 )
@@ -23,54 +21,9 @@ func (e dbError) Unwrap() error {
 	return e.error
 }
 
-// Recursive function which will generate a map of tables to a map of columns containing the type of the column.
-func getFirebirdStructTags(tableName string, obj reflect.Type) (map[string]map[string]reflect.Type, error) {
-	fields := make(map[string]reflect.Type)
-	tmap := make(map[string]map[string]reflect.Type)
-	for i := 0; i < obj.NumField(); i++ {
-		structField := obj.Field(i)
-		firebirdTag := structField.Tag.Get("firebird")
-		if structField.Type.Kind() == reflect.Struct && structField.Type != reflect.TypeOf(time.Time{}) {
-			nestedTable := tableName
-			if firebirdTag != "" {
-				nestedTable = firebirdTag
-			}
-			if nested, err := getFirebirdStructTags(nestedTable, structField.Type); err != nil {
-				return tmap, errors.Wrapf(err, "firebird get struct tags")
-			} else {
-				for k, v := range nested {
-					tmap[k] = v
-				}
-			}
-		} else if firebirdTag == "" {
-			continue //Nothing here matches with the firebird DB
-		} else {
-			fields[firebirdTag] = structField.Type
-		}
-	}
-	if v, ok := tmap[tableName]; ok {
-		// Extend field list
-		for k, field := range v {
-			fields[k] = field
-		}
-	}
-	if len(fields) > 0 {
-		tmap[tableName] = fields
-	}
-	return tmap, nil
-}
-
-func firebirdGet(db *linkActivationDB) error {
-	mainObj := reflect.TypeOf(*db)
-	if mainObj.Kind() != reflect.Struct {
-		return errors.Errorf("db kind %v is not Struct (%v)", mainObj.Kind(), reflect.Struct)
-	}
-	if tableMap, err := getFirebirdStructTags("parent", mainObj); err != nil {
-		return errors.Wrapf(err, "firebird get struct tags")
-	} else {
-		log.Printf("table map: %v", tableMap)
-	}
-	return nil
+func (e dbError) String() string {
+	return fmt.Sprintf("DB error \ntable: %s\nstatement: %s",
+		e.name, e.statement)
 }
 
 type column struct {
@@ -104,7 +57,7 @@ func forEachColumn(tableName string, obj reflect.Value, handler firebirdColHandl
 				}
 			}
 		}
-		if structVal.Kind() == reflect.Struct && structVal.Type() != reflect.TypeOf(time.Time{}) {
+		if structVal.Kind() == reflect.Struct && structVal.Type() != reflect.TypeOf(CustomJSONTime{}) {
 			// This references a nested struct. Call this function recursively.
 			nestedTable := tableName
 			if firebirdTag != "" {
@@ -129,21 +82,20 @@ func forEachColumn(tableName string, obj reflect.Value, handler firebirdColHandl
 
 // Create the update statement and try to execute it against the DB.
 func tryUpdate(ctx context.Context, db *sql.DB, tableName string, columns []column) error {
-	colList := make([]string, len(columns))
-	valList := make([]interface{}, len(columns))
+	colList := make([]string, 0, len(columns))
+	valList := make([]interface{}, 0, len(columns))
 	keyCol := []string{}
 	keyVal := []interface{}{}
-	i := 0
 	for _, column := range columns {
-		colList[i] = column.name
-		valList[i] = column.value
+		if column.isSequence {
+			// Don't use the sequence numbers in update statements
+			continue
+		}
+		colList = append(colList, column.name)
+		valList = append(valList, column.value)
 		if column.isMatch {
 			keyCol = append(keyCol, column.name)
 			keyVal = append(keyVal, column.value)
-		}
-		i++
-		if i > len(colList) || i > len(valList) {
-			return errors.Errorf("Coding error: column list is smaller than column map")
 		}
 	}
 	if len(keyCol) == 0 {
@@ -153,7 +105,7 @@ func tryUpdate(ctx context.Context, db *sql.DB, tableName string, columns []colu
 		return errors.Errorf("no columns specified for table %s", tableName)
 	}
 	stmt := fmt.Sprintf("UPDATE %s SET %s WHERE %s", tableName,
-		strings.Join(colList, "=?,")+"=?", strings.Join(keyCol, "=? AND")+"=?")
+		strings.Join(colList, "=?,")+"=?", strings.Join(keyCol, "=? AND ")+"=?")
 	if result, err := db.ExecContext(ctx, stmt, append(valList, keyVal...)...); err != nil {
 		return errors.Wrapf(dbError{
 			error:     err,
@@ -171,6 +123,7 @@ func tryUpdate(ctx context.Context, db *sql.DB, tableName string, columns []colu
 	} else if rowCount == int64(0) {
 		// Update failed - row likely doesn't exist yet.
 		return errors.Wrapf(dbError{
+			error:     errors.Errorf("RowsAffected is 0"),
 			name:      tableName,
 			cols:      columns,
 			statement: stmt,
@@ -189,7 +142,7 @@ func tryInsert(ctx context.Context, db *sql.DB, tableName string, columns []colu
 			return 0, errors.Wrapf(dbError{
 				error:     err,
 				name:      tableName,
-				cols:      columns,
+				cols:      []column{{name: colName}},
 				statement: idStmt,
 			}, "insert getting next sequence number")
 		} else if !rows.Next() {
@@ -200,29 +153,17 @@ func tryInsert(ctx context.Context, db *sql.DB, tableName string, columns []colu
 		return maxID, nil
 	}
 
-	colList := make([]string, len(columns), len(columns)+1)
-	valList := make([]interface{}, len(columns), len(columns)+1)
-	keyCol := []string{}
-	keyVal := []interface{}{}
-	seqCol := ""
-	i := 0
+	colList := make([]string, 0, len(columns))
+	valList := make([]interface{}, 0, len(columns))
+	var seqCol string
+	var seqIDX int
 	for _, column := range columns {
-		colList[i] = column.name
-		valList[i] = column.value
-		if column.isMatch {
-			keyCol = append(keyCol, column.name)
-			keyVal = append(keyVal, column.value)
-		}
+		colList = append(colList, column.name)
+		valList = append(valList, column.value)
 		if column.isSequence {
 			seqCol = column.name
+			seqIDX = len(valList) - 1
 		}
-		i++
-		if i > len(colList) || i > len(valList) {
-			return errors.Errorf("Coding error: column list is smaller than column map")
-		}
-	}
-	if len(keyCol) == 0 {
-		return errors.Errorf("no keys specified for table %s", tableName)
 	}
 	if len(colList) == 0 {
 		return errors.Errorf("no columns specified for table %s", tableName)
@@ -231,9 +172,14 @@ func tryInsert(ctx context.Context, db *sql.DB, tableName string, columns []colu
 		// Get the next logical sequence number for the table
 		if maxID, err := getMaxID(ctx, tableName, seqCol); err != nil {
 			return errors.Wrapf(err, "insert failed to get max sequence number")
+		} else if maxID == 0 {
+			return errors.Wrapf(dbError{
+				error: errors.Errorf("max sequence number is 0"),
+				name:  tableName,
+				cols:  []column{{name: seqCol}},
+			}, "maxID cannot be 0")
 		} else {
-			colList = append(colList, seqCol)
-			valList = append(valList, maxID+1)
+			valList[seqIDX] = maxID + 1
 		}
 	}
 	// Statement to insert the new record
@@ -258,6 +204,7 @@ func tryInsert(ctx context.Context, db *sql.DB, tableName string, columns []colu
 	} else if rowCount == int64(0) {
 		// Update failed - row likely doesn't exist yet.
 		return errors.Wrapf(dbError{
+			error:     errors.Errorf("RowsAffected is 0"),
 			name:      tableName,
 			cols:      columns,
 			statement: insertStmt,
@@ -271,7 +218,7 @@ func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
 	tables := make(map[string][]column)
 	dbObj := reflect.ValueOf(*data)
 	if err := forEachColumn("parent", dbObj, func(tableName string, col column) error {
-		if reflect.ValueOf(col.value).IsZero() {
+		if !col.isSequence && reflect.ValueOf(col.value).IsZero() {
 			if col.isMatch {
 				return errors.Errorf("match field cannot be zero")
 			} else {
@@ -279,7 +226,7 @@ func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
 				return nil
 			}
 		} else if _, ok := tables[tableName]; !ok {
-			tables[tableName] = make([]column, 0, 12)
+			tables[tableName] = make([]column, 0)
 		}
 		tables[tableName] = append(tables[tableName], col)
 		return nil
@@ -296,7 +243,7 @@ func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
 			continue
 		} else if !errors.As(err, &dberr) {
 			return errors.Wrapf(err, "tryUpdate returned a coding error")
-		} else if err := tryInsert(ctx, db, table, columns); err != nil {
+		} else if inserr := tryInsert(ctx, db, table, columns); inserr != nil {
 			return errors.Wrapf(err, "send to DB insert table %s", table)
 		}
 	}

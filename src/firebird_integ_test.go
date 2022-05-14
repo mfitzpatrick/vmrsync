@@ -40,7 +40,7 @@ func TestDBWorks(t *testing.T) {
 	}
 }
 
-func TestRunInsertStatements(t *testing.T) {
+func TestSendToDB_ExistingRecord(t *testing.T) {
 	dbObj := &linkActivationDB{
 		ID: 42,
 		Job: Job{
@@ -57,14 +57,49 @@ func TestRunInsertStatements(t *testing.T) {
 
 	// Check that data in DB was updated correctly
 	rows, err := realDB.QueryContext(context.Background(),
-		"SELECT JOBSEAS FROM DUTYJOBS WHERE JOBTIMEOUT='2022-01-01 06:00:35' AND JOBDUTYVESSELNAME='MR2'")
+		"SELECT JOBDUTYSEQUENCE,JOBSEAS FROM DUTYJOBS"+
+			" WHERE JOBTIMEOUT='2022-01-01 06:00:35' AND JOBDUTYVESSELNAME='MR2'")
 	if assert.Nil(t, err) {
 		defer rows.Close()
 		assert.True(t, rows.Next())
+		var seq int
 		var seastate string
-		err = rows.Scan(&seastate)
+		err = rows.Scan(&seq, &seastate)
 		assert.Nil(t, err)
 		assert.Equal(t, "calm", strings.TrimSpace(seastate))
+		assert.Equal(t, 1, seq)
+		assert.False(t, rows.Next())
+	}
+}
+
+func TestSendToDB_NewRecord(t *testing.T) {
+	dbObj := &linkActivationDB{
+		ID: 482,
+		Job: Job{
+			StartTime: CustomJSONTime(getTimeUTC(t, "2022-02-07T13:50:12Z")),
+			SeaState:  "moderate",
+			Vessel: Vessel{
+				ID:   3,
+				Name: "MR4",
+			},
+		},
+	}
+	err := sendToDB(context.Background(), realDB, dbObj)
+	assert.Nil(t, err)
+
+	// Check that data in DB was updated correctly
+	rows, err := realDB.QueryContext(context.Background(),
+		"SELECT JOBDUTYSEQUENCE,JOBSEAS FROM DUTYJOBS"+
+			" WHERE JOBTIMEOUT='2022-02-07 13:50:12' AND JOBDUTYVESSELNAME='MR4'")
+	if assert.Nil(t, err) {
+		defer rows.Close()
+		assert.True(t, rows.Next())
+		var seq int
+		var seastate string
+		err = rows.Scan(&seq, &seastate)
+		assert.Nil(t, err)
+		assert.Equal(t, "moderate", strings.TrimSpace(seastate))
+		assert.Equal(t, 3, seq)
 		assert.False(t, rows.Next())
 	}
 }

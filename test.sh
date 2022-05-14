@@ -46,7 +46,7 @@ if [ "$test_type" = "integration" ]; then
     fi
     docker-compose -f "$BASE/dbtest/docker-compose.yml" down --rmi all
     docker-compose -f "$BASE/tripwatch-test/docker-compose.yml" down
-    rm "$BASE/testbin
+    rm "$BASE/testbin"
     exit $test_result
 fi
 
