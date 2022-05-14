@@ -69,25 +69,9 @@ func TestForEachCol(t *testing.T) {
 		},
 	}
 	mainObj := reflect.ValueOf(*db)
-	err := forEachColumn("parent", mainObj, func(tableName, colName string, isKey bool, item interface{}) error {
-		log.Printf("item for %s.%s is %v", tableName, colName, item)
+	err := forEachColumn("parent", mainObj, func(tableName string, col column) error {
+		log.Printf("item for %s.%s is %v", tableName, col.name, col.value)
 		return nil
 	})
 	assert.Nil(t, err)
-}
-
-func TestBuildInsertStatements(t *testing.T) {
-	db := &linkActivationDB{
-		ID: 42,
-		Job: Job{
-			StartTime: CustomJSONTime(time.Now()),
-			Vessel: Vessel{
-				ID:   1,
-				Name: "MR1",
-			},
-		},
-	}
-	stmtList, err := buildInsertStatements(db)
-	assert.Nil(t, err)
-	assert.Less(t, 0, len(stmtList))
 }

@@ -52,11 +52,7 @@ func TestRunInsertStatements(t *testing.T) {
 			},
 		},
 	}
-	stmts, err := buildInsertStatements(dbObj)
-	assert.Nil(t, err)
-	assert.Equal(t, 1, len(stmts))
-
-	err = runStatements(context.Background(), realDB, stmts)
+	err := sendToDB(context.Background(), realDB, dbObj)
 	assert.Nil(t, err)
 
 	// Check that data in DB was updated correctly

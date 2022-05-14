@@ -28,6 +28,7 @@ type Vessel struct {
 }
 
 type Job struct {
+	ID        int            `firebird:"JOBDUTYSEQUENCE,id"`
 	StartTime CustomJSONTime `firebird:"JOBTIMEOUT,match" json:"activationsrvdeparttime"`
 	EndTime   CustomJSONTime `firebird:"JOBTIMEIN" json:"activationsrvreturntime"`
 	SeaState  string         `firebird:"JOBSEAS" json:"activationsobservedseastate"`
