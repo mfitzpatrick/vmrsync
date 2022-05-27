@@ -24,7 +24,7 @@ func TestNestedStructJSONUnmarshal(t *testing.T) {
 		Created: CustomJSONTime(getTime(t, "2022-03-12T12:30:31.000000Z")),
 		Updated: CustomJSONTime(getTime(t, "2022-03-12T12:50:15.000000Z")),
 		Job: Job{
-			Vessel: Vessel{
+			VMRVessel: VMRVessel{
 				Name: "MARINERESCUE1",
 			},
 			StartTime: CustomJSONTime(getTime(t, "2022-03-12T12:35:00.000000Z")),
@@ -39,4 +39,16 @@ func TestCustomTimeZero(t *testing.T) {
 	assert.False(t, time.Time(ctm).IsZero())
 	assert.False(t, reflect.ValueOf(tm).IsZero())
 	assert.False(t, reflect.ValueOf(ctm).IsZero())
+}
+
+// Test case to check that I know how strings are indexed.
+// They are indexed a byte at a time (so unicode characters will be indexed 1 byte at a time, and
+// not as a whole character).
+func TestSubstringAssumption(t *testing.T) {
+	s := "This is a string"
+	assert.Equal(t, "his is a strin", s[1:len(s)-1])
+	assert.Equal(t, 'g', rune(s[len(s)-1]))
+	s = "\"Hello'"
+	assert.Equal(t, '"', rune(s[0]))
+	assert.Equal(t, '\'', rune(s[len(s)-1]))
 }

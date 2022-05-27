@@ -46,7 +46,7 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 		Job: Job{
 			StartTime: CustomJSONTime(getTimeUTC(t, "2022-01-01T06:00:35Z")),
 			SeaState:  "calm",
-			Vessel: Vessel{
+			VMRVessel: VMRVessel{
 				ID:   2,
 				Name: "MR2",
 			},
@@ -78,7 +78,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 		Job: Job{
 			StartTime: CustomJSONTime(getTimeUTC(t, "2022-02-07T13:50:12Z")),
 			SeaState:  "moderate",
-			Vessel: Vessel{
+			VMRVessel: VMRVessel{
 				ID:   3,
 				Name: "MR4",
 			},

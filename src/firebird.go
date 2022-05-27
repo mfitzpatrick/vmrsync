@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -213,7 +214,82 @@ func tryInsert(ctx context.Context, db *sql.DB, tableName string, columns []colu
 	return nil
 }
 
+// For fields that are not automatically prefilled by data input from TripWatch, manually update
+// them with aggregated data from other fields in the record.
+func aggregateFields(data *linkActivationDB) error {
+	if data == nil {
+		return errors.Errorf("Data pointer cannot be nil")
+	}
+
+	data.Job.Emergency.Emergency = bool(data.Job.Emergency.Notified)
+	data.Job.Commercial = strings.HasSuffix(data.Job.AssistedVessel.Rego, "C")
+	if data.Job.Weather.Forecast != "" {
+		if err := parseForecast(&data.Job.Weather); err != nil {
+			return errors.Wrapf(err, "aggregateFields parsing forecast failed")
+		}
+	}
+
+	return nil
+}
+
+func parseForecast(weather *Weather) error {
+	if weather.Forecast == "" {
+		return errors.Errorf("parseForecast string cannot be empty")
+	}
+
+	gcwaters := strings.Split(weather.Forecast, "Gold Coast Waters:")
+	if len(gcwaters) < 2 {
+		return errors.Errorf("parseForecast couldn't find GC forecast: %d", len(gcwaters))
+	}
+	for _, line := range strings.Split(gcwaters[1], "\n") {
+		line = strings.ToLower(strings.TrimSpace(line))
+		if strings.Contains(line, "winds:") {
+			// Find mentions of wind directions
+			if strings.Contains(line, "southeasterly") {
+				weather.WindDir = WindDirEnum("SE")
+			} else if strings.Contains(line, "southerly") {
+				weather.WindDir = WindDirEnum("S")
+			} else if strings.Contains(line, "southwesterly") {
+				weather.WindDir = WindDirEnum("SW")
+			} else if strings.Contains(line, "westerly") {
+				weather.WindDir = WindDirEnum("W")
+			} else if strings.Contains(line, "northwesterly") {
+				weather.WindDir = WindDirEnum("NW")
+			} else if strings.Contains(line, "northerly") {
+				weather.WindDir = WindDirEnum("N")
+			} else if strings.Contains(line, "northeasterly") {
+				weather.WindDir = WindDirEnum("NE")
+			} else if strings.Contains(line, "easterly") {
+				weather.WindDir = WindDirEnum("E")
+			}
+
+			// Parse wind speed
+			knotSplit := strings.Split(line, "knots")
+			fieldsList := strings.Fields(knotSplit[0])
+			speed := fieldsList[len(fieldsList)-1]
+			if val, err := strconv.ParseInt(speed, 10, 32); err != nil {
+				return errors.Wrapf(err, "parse wind speed %s", speed)
+			} else {
+				weather.WindSpeed.Set(int(val))
+			}
+		} else if strings.Contains(line, "weather:") {
+			if strings.Contains(line, "sunny") || strings.Contains(line, "partly cloudy") {
+				weather.RainState = "Clear"
+			} else {
+				weather.RainState = "Rain"
+			}
+		}
+	}
+
+	return nil
+}
+
 func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
+	// Aggregate any field entries that it is possible to aggregate
+	if err := aggregateFields(data); err != nil {
+		return errors.Wrapf(err, "sendToDB failed to aggregate fields")
+	}
+
 	// Build a map of tables that contains the list of columns and associated data
 	tables := make(map[string][]column)
 	dbObj := reflect.ValueOf(*data)

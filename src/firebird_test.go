@@ -36,7 +36,7 @@ func TestForEachCol(t *testing.T) {
 		ID: 42,
 		Job: Job{
 			StartTime: CustomJSONTime(time.Now()),
-			Vessel: Vessel{
+			VMRVessel: VMRVessel{
 				ID:   1,
 				Name: "MR1",
 			},
@@ -48,4 +48,62 @@ func TestForEachCol(t *testing.T) {
 		return nil
 	})
 	assert.Nil(t, err)
+}
+
+func TestAggregateFields(t *testing.T) {
+	// Check emergency flag
+	data := &linkActivationDB{
+		Job: Job{
+			Emergency: Emergency{
+				Notified: true,
+			},
+		},
+	}
+	err := aggregateFields(data)
+	assert.Nil(t, err)
+	assert.True(t, data.Job.Emergency.Emergency)
+	assert.False(t, data.Job.Commercial)
+
+	// Check commercial flag
+	data = &linkActivationDB{
+		Job: Job{
+			AssistedVessel: AssistedVessel{
+				Rego: "ABC123QC",
+			},
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.False(t, data.Job.Emergency.Emergency)
+	assert.True(t, data.Job.Commercial)
+
+	// Check forecast parsing
+	data = &linkActivationDB{
+		Job: Job{
+			Weather: Weather{
+				Forecast: "[Byron Coast: Point Danger to Wooli, Winds:" +
+					"  Southeasterly 10 to 15 knots, reaching up to 20 knots" +
+					" north of Yamba in the evening.\r\n" +
+					" Seas:  Around 1 metre, increasing to 1 to 1.5 metres offshore north of Cape Byron.\r\n" +
+					" Swell1:  Southerly around 1 metre inshore, increasing to 1.5 metres offshore.\r\n" +
+					" Swell2:  Easterly 1.5 metres.\r\n Weather:  Mostly clear.\r\n] " +
+					"[Moreton Bay, Winds:  South to southeasterly 15 to 20 knots.\r\n" +
+					" Seas:  Around 1 metre, increasing to 1 to 1.5 metres in the northern bay.\r\n" +
+					" Weather:  Partly cloudy. 40% chance of showers over the" +
+					" eastern bay during the evening.\r\n] " +
+					"[Gold Coast Waters: Cape Moreton to Point Danger," +
+					" Winds:  South to southeasterly 15 to 20 knots.\r\n" +
+					" Seas:  1.5 metres.\r\n" +
+					" Swell1:  Easterly around 1 metre inshore, increasing to 1.5 metres offshore.\r\n" +
+					" Swell2:  Southerly below 1 metre inshore, increasing to 1 to 1.5 metres offshore.\r\n" +
+					" Weather:  Partly cloudy. 40% chance of showers offshore.\r\n]",
+			},
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.False(t, data.Job.Emergency.Emergency)
+	assert.Equal(t, "SE", string(data.Job.Weather.WindDir))
+	assert.Equal(t, "10 - 20kt", string(data.Job.Weather.WindSpeed))
+	assert.Equal(t, "Clear", data.Job.Weather.RainState)
 }
