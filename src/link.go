@@ -159,6 +159,11 @@ type IntString float32 //TripWatch floating-point number contained in a string
 
 func (i *IntString) UnmarshalJSON(bytes []byte) error {
 	rawString := strings.Trim(strings.TrimSpace(string(bytes)), "\"")
+	if rawString == "null" {
+		// Special case - ignore NULL
+		*i = IntString(0.0)
+		return nil
+	}
 	if strings.ToLower(rawString) == "null" {
 		*i = IntString(float32(0.0))
 		return nil
@@ -174,6 +179,11 @@ type LengthEnum string // Firebird enumerated length range
 
 func (l *LengthEnum) UnmarshalJSON(bytes []byte) error {
 	rawString := strings.Trim(strings.TrimSpace(string(bytes)), "\"")
+	if rawString == "null" {
+		// Special case - ignore NULL
+		*l = LengthEnum("")
+		return nil
+	}
 	if val, err := strconv.ParseFloat(rawString, 32); err != nil {
 		return errors.Wrapf(err, "unmarshal LengthEnum %s", string(bytes))
 	} else {

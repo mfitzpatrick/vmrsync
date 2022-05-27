@@ -26,6 +26,10 @@ func TestIntStringUnmarshal(t *testing.T) {
 	err = (&i).UnmarshalJSON([]byte("3665489.5351867"))
 	assert.Nil(t, err)
 	assert.Equal(t, float32(3665489.5351867), float32(i))
+
+	err = (&i).UnmarshalJSON([]byte("null"))
+	assert.Nil(t, err)
+	assert.Equal(t, float32(0.0), float32(i))
 }
 
 func TestLengthEnumUnmarshal(t *testing.T) {
@@ -37,6 +41,10 @@ func TestLengthEnumUnmarshal(t *testing.T) {
 	err = (&l).UnmarshalJSON([]byte(" \"15"))
 	assert.Nil(t, err)
 	assert.Equal(t, "> 12m", string(l))
+
+	err = (&l).UnmarshalJSON([]byte("null"))
+	assert.Nil(t, err)
+	assert.Equal(t, "", string(l))
 }
 
 func TestWindSpeedEnumUnmarshal(t *testing.T) {

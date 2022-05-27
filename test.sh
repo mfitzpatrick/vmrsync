@@ -38,7 +38,7 @@ if [ "$test_type" = "integration" ]; then
     fi
     sh "$BASE/dbtest/start.sh"
     docker-compose -f "$BASE/tripwatch-test/docker-compose.yml" up -d
-    "$BASE/testbin"
+    CONFIG_FILE="$BASE/tripwatch-test/test-config.yml" "$BASE/testbin"
     test_result=$?
     docker-compose -f "$BASE/dbtest/docker-compose.yml" -f "$BASE/tripwatch-test/docker-compose.yml" logs
     if [ -n "$MANUALDB" ]; then
