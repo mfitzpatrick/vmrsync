@@ -61,13 +61,32 @@ func TestWindDirectionEnumUnmarshal(t *testing.T) {
 	assert.Equal(t, "N", string(w))
 }
 
+func TestSeaStateEnumUnmarshal(t *testing.T) {
+	var s SeaStateEnum
+	err := (&s).UnmarshalJSON([]byte("3"))
+	assert.Nil(t, err)
+	assert.Equal(t, "Calm", string(s))
+
+	err = (&s).UnmarshalJSON([]byte("5"))
+	assert.Nil(t, err)
+	assert.Equal(t, "Moderate", string(s))
+
+	err = (&s).UnmarshalJSON([]byte("9"))
+	assert.Nil(t, err)
+	assert.Equal(t, "Rough", string(s))
+
+	err = (&s).UnmarshalJSON([]byte("null"))
+	assert.Nil(t, err)
+	assert.Equal(t, "", string(s))
+}
+
 func TestStringListUnmarshal(t *testing.T) {
 	var s StringList
 	err := (&s).UnmarshalJSON([]byte(`["s1", "s2"]`))
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"s1", "s2"}, []string(s))
 
-	err = (&s).UnmarshalJSON([]byte(`"["s1", "s2"]" `))
+	err = (&s).UnmarshalJSON([]byte(` "[\"s1\", \"s2\"]" `))
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"s1", "s2"}, []string(s))
 }

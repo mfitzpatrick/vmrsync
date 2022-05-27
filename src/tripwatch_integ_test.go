@@ -36,7 +36,7 @@ func TestIntegTripwatchCallHelper(t *testing.T) {
 }
 
 func TestIntegTripwatchListActivations(t *testing.T) {
-	_, err := listActivations(context.Background())
+	list, err := listActivations(context.Background())
 	assert.Nil(t, err)
-	// assert.Less(t, 0, len(list))
+	assert.Less(t, 0, len(list))
 }

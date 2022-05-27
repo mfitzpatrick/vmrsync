@@ -77,10 +77,10 @@ type Job struct {
 	Action      string         `firebird:"JOBACTIONTAKEN" json:"activationsdvactionrequested"`
 	Purpose     string         `json:"activationspurpose"`
 	Comments    string         `firebird:"JOBDETAILS" json:"activationscomments"`
-	Donation    int            `firebird:"JOBDONATION" json:"activationsdonationreceived"`
+	Donation    IntString      `firebird:"JOBDONATION" json:"activationsdonationreceived"`
 	Frequency   string         `firebird:"JOBFREQUENCY"`
 	WaterLimits string         `firebird:"JOBWATERLIMITS" json:"activationsoperationsareaclassification"`
-	SeaState    string         `firebird:"JOBSEAS" json:"activationsobservedseastate"`
+	SeaState    SeaStateEnum   `firebird:"JOBSEAS" json:"activationsobservedseastate"`
 	Commercial  bool           `firebird:"JOBCOMMERCIALVESSEL"`
 	VMRVessel
 	AssistedVessel
@@ -244,11 +244,42 @@ func (w *WindDirEnum) UnmarshalJSON(bytes []byte) error {
 	return nil
 }
 
+type SeaStateEnum string // Firebird enumerated sea state
+
+func (s *SeaStateEnum) UnmarshalJSON(bytes []byte) error {
+	if string(bytes) == "null" {
+		// Special case - ignore NULL
+		*s = SeaStateEnum("")
+		return nil
+	}
+
+	if stateID, err := strconv.ParseInt(string(bytes), 10, 32); err != nil {
+		return errors.Wrapf(err, "SeaStateEnum JSON int parse failed")
+	} else {
+		switch id := stateID; {
+		case id <= 3:
+			*s = SeaStateEnum("Calm")
+		case id == 4, id == 5:
+			*s = SeaStateEnum("Moderate")
+		default:
+			*s = SeaStateEnum("Rough")
+		}
+	}
+	return nil
+}
+
 // Contains a TripWatch JSON list that has been encoded as a single string
 type StringList []string
 
 func (s *StringList) UnmarshalJSON(bytes []byte) error {
-	rawString := strings.Trim(strings.TrimSpace(string(bytes)), "\"")
+	rawString := strings.TrimSpace(string(bytes))
+	if rawString[0] == '"' || rawString[0] == '\'' {
+		if unquotedString, err := strconv.Unquote(rawString); err != nil {
+			return errors.Wrapf(err, "StringList couldn't unquote string")
+		} else {
+			rawString = unquotedString
+		}
+	}
 	var sList []string
 	if err := json.Unmarshal([]byte(rawString), &sList); err != nil {
 		return errors.Wrapf(err, "StringList failed to parse JSON '%s'", rawString)

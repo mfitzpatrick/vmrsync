@@ -87,69 +87,7 @@
 						}
 					],
 					"cookie": [],
-					"body": "[\n    {\n        \"id\": 86239\n    }\n]"
-				},
-				{
-					"name": "List Activations 86297",
-					"originalRequest": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "/api/activations/recent",
-							"path": [
-								"api",
-								"activations",
-								"recent"
-							]
-						}
-					},
-					"status": "OK",
-					"code": 200,
-					"_postman_previewlanguage": "json",
-					"header": [
-						{
-							"key": "Server",
-							"value": "nginx"
-						},
-						{
-							"key": "Content-Type",
-							"value": "application/json"
-						},
-						{
-							"key": "Transfer-Encoding",
-							"value": "chunked"
-						},
-						{
-							"key": "Connection",
-							"value": "keep-alive"
-						},
-						{
-							"key": "Cache-Control",
-							"value": "no-cache, private"
-						},
-						{
-							"key": "Date",
-							"value": "Fri, 27 May 2022 01:06:01 GMT"
-						},
-						{
-							"key": "X-RateLimit-Limit",
-							"value": "60"
-						},
-						{
-							"key": "X-RateLimit-Remaining",
-							"value": "59"
-						},
-						{
-							"key": "X-Frame-Options",
-							"value": "SAMEORIGIN"
-						},
-						{
-							"key": "Strict-Transport-Security",
-							"value": "max-age=31536000; includeSubDomains"
-						}
-					],
-					"cookie": [],
-					"body": "[\n    {\n        \"id\": 86297\n    }\n]"
+					"body": "[\n    {\n        \"id\": 86239\n    },\n    {\n        \"id\": 86297\n    }\n]"
 				}
 			]
 		},
