@@ -39,9 +39,34 @@ docker-compose -f dbtest/docker-compose.yml down --rmi all
 ## Tests
 This project includes test cases as examples which are automatically run in CI. To
 manually run the test cases, including integration tests which operate against the
-live TripWatch instance, do:
+PostMan-mocked TripWatch instance, do:
 ```
-cd src
-go test --tags integration
+sh ./test.sh integration
+```
+This helper test script will spin up versions of the Firebird DB as well as the mocked
+TripWatch instance and run all the integration tests of the system against those
+instances. This is a normal golang test, so at the end of the process it will either
+pass or fail.
+
+A second form of testing is pseudo-live. For this form of testing we can run a sample
+copy of the Firebird DB alongside a 'live' version of TripWatch (for testing purposes
+it's recommended that you use the
+[training version of TripWatch](https://tripwatch-training.platformrescue.com.au)).
+To start this, run:
+```
+sh ./test.sh manual
+```
+This will leave the current Firebird instance running when it exits, so that the same
+instance can be tested against repeatedly (even if the app binary needs to be updated).
+To stop the running Firebird instance, run:
+```
+sh ./test.sh clean
+```
+
+On occasion, the Firebird DB will need to be inspected to ensure that a particular update
+was properly applied. A helper item has been added to this also (NB: it only works when
+the DB is actually running):
+```
+sh ./test.sh inspect
 ```
 
