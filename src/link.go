@@ -48,6 +48,20 @@ type Emergency struct {
 	AgenciesAttending StringList     `json:"activationsqasattending"`
 }
 
+type GPS struct {
+	TWLatLong string  `json:"activationsposition"`
+	Lat       float64 `firebird:"JOBLATDEC"`
+	Long      float64 `firebird:"JOBLONDEC"`
+
+	// Breaking it down to DMS for Firebird
+	LatD  int     `firebird:"JOBLATDEG"`
+	LatM  int     `firebird:"JOBLATMIN"`
+	LatS  float64 `firebird:"JOBLATSEC"`
+	LongD int     `firebird:"JOBLONDEG"`
+	LongM int     `firebird:"JOBLONMIN"`
+	LongS float64 `firebird:"JOBLONSEC"`
+}
+
 type Weather struct {
 	Forecast  string        `json:"activationsactivationweatherforecast"`
 	WindSpeed WindSpeedEnum `firebird:"JOBWINDSPEED"`
@@ -65,12 +79,13 @@ type Job struct {
 	Comments    string         `firebird:"JOBDETAILS" json:"activationscomments"`
 	Donation    int            `firebird:"JOBDONATION" json:"activationsdonationreceived"`
 	Frequency   string         `firebird:"JOBFREQUENCY"`
-	WaterLimits string         `firebird:"JOBWATERLIMITS" json:"activationscrossingbar"`
+	WaterLimits string         `firebird:"JOBWATERLIMITS" json:"activationsoperationsareaclassification"`
 	SeaState    string         `firebird:"JOBSEAS" json:"activationsobservedseastate"`
 	Commercial  bool           `firebird:"JOBCOMMERCIALVESSEL"`
 	VMRVessel
 	AssistedVessel
 	Emergency
+	GPS
 	Weather
 }
 
