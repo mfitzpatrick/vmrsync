@@ -102,4 +102,95 @@ func TestSendToDB_NewRecord(t *testing.T) {
 		assert.Equal(t, 3, seq)
 		assert.False(t, rows.Next())
 	}
+
+	// Check it again with a different object
+	dbObj = &linkActivationDB{
+		ID: 882,
+		Job: Job{
+			StartTime: CustomJSONTime(getTimeUTC(t, "2022-02-12T16:01:56Z")),
+			SeaState:  "rough",
+			VMRVessel: VMRVessel{
+				ID:   2,
+				Name: "MARINERESCUE2",
+			},
+		},
+	}
+	err = sendToDB(context.Background(), realDB, dbObj)
+	assert.Nil(t, err)
+
+	// Check that data in DB was updated correctly
+	rows, err = realDB.QueryContext(context.Background(),
+		"SELECT JOBDUTYSEQUENCE,JOBSEAS FROM DUTYJOBS"+
+			" WHERE JOBTIMEOUT='2022-02-12 16:01:56' AND JOBDUTYVESSELNAME='MARINERESCUE2'")
+	if assert.Nil(t, err) {
+		defer rows.Close()
+		assert.True(t, rows.Next())
+		var seq int
+		var seastate string
+		err = rows.Scan(&seq, &seastate)
+		assert.Nil(t, err)
+		assert.Equal(t, "rough", strings.TrimSpace(seastate))
+		assert.Equal(t, 4, seq)
+		assert.False(t, rows.Next())
+	}
+
+	// And again with everything that's failing in another test
+	dbObj = &linkActivationDB{
+		ID: 22,
+		Job: Job{
+			StartTime:   CustomJSONTime(getTimeUTC(t, "2022-01-16T06:09:32Z")),
+			EndTime:     CustomJSONTime(getTimeUTC(t, "2022-01-16T08:00:00Z")),
+			Type:        "Assist",
+			Action:      "Tow, refloat, medical assist",
+			Comments:    "This is the comments field.",
+			Donation:    IntString(200),
+			WaterLimits: "E",
+			SeaState:    "Calm",
+			AssistedVessel: AssistedVessel{
+				Rego:       "AB123Q",
+				Name:       "Dummy II",
+				Length:     LengthEnum("0-8m"),
+				Type:       "Party Pontoon",
+				Propulsion: "Outboard",
+				NumAdults:  1,
+				NumKids:    3,
+			},
+			Emergency: Emergency{
+				PoliceNum: "987654321",
+				Notified:  true,
+			},
+			GPS: GPS{
+				TWLatLong: "-27.5,153.7",
+			},
+			VMRVessel: VMRVessel{
+				ID:             2,
+				Name:           "MARINERESCUE2",
+				StartHoursPort: IntString(56),
+				EndHoursPort:   IntString(58),
+			},
+			Weather: Weather{
+				WindSpeed: WindSpeedEnum("10 - 20kt"),
+				WindDir:   WindDirEnum("SE"),
+				RainState: "Clear",
+			},
+		},
+	}
+	err = sendToDB(context.Background(), realDB, dbObj)
+	assert.Nil(t, err)
+
+	// Check that data in DB was updated correctly
+	rows, err = realDB.QueryContext(context.Background(),
+		"SELECT JOBDUTYSEQUENCE,JOBSEAS FROM DUTYJOBS"+
+			" WHERE JOBTIMEOUT='2022-01-16 06:09:32' AND JOBDUTYVESSELNAME='MARINERESCUE2'")
+	if assert.Nil(t, err) {
+		defer rows.Close()
+		assert.True(t, rows.Next())
+		var seq int
+		var seastate string
+		err = rows.Scan(&seq, &seastate)
+		assert.Nil(t, err)
+		assert.Equal(t, "Calm", strings.TrimSpace(seastate))
+		assert.Equal(t, 5, seq)
+		assert.False(t, rows.Next())
+	}
 }

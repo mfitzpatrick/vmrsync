@@ -26,7 +26,7 @@ func (e dbError) Unwrap() error {
 }
 
 func (e dbError) String() string {
-	return fmt.Sprintf("DB error on table: %s\n\tstatement: %s\n\t",
+	return fmt.Sprintf("DB error on table %s with statement:\n\t%s\n\t",
 		e.name, e.statement)
 }
 
@@ -303,7 +303,11 @@ func parseGPS(gps *GPS) error {
 
 	splitStr := strings.Split(gps.TWLatLong, ",")
 	if len(splitStr) != 2 {
-		return errors.Errorf("TripWatch lat/long string is not 2 entries: '%s'", gps.TWLatLong)
+		// Try splitting on spaces
+		splitStr = strings.Split(gps.TWLatLong, " ")
+		if len(splitStr) != 2 {
+			return errors.Errorf("TripWatch lat/long string is not 2 entries: '%s'", gps.TWLatLong)
+		}
 	}
 	if lat, err := strconv.ParseFloat(strings.TrimSpace(strings.Trim(splitStr[0], "\"")), 64); err != nil {
 		return errors.Wrapf(err, "TripWatch parse GPS lat '%s'", splitStr[0])

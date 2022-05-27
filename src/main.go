@@ -57,8 +57,8 @@ func run(db *sql.DB) []error {
 	if activations, err := listActivations(ctx); err != nil {
 		errlist = append(errlist, errors.Wrapf(err, "List TripWatch activations"))
 	} else {
-		for i, activation := range activations {
-			if err := sendToDB(ctx, db, &activation); err != nil {
+		for i, _ := range activations {
+			if err := sendToDB(ctx, db, &activations[i]); err != nil {
 				errlist = append(errlist, runError{
 					error:      errors.Wrapf(err, "DB update"),
 					activation: &activations[i],
@@ -70,10 +70,12 @@ func run(db *sql.DB) []error {
 }
 
 func main() {
-	if conn, err := openDB(); err != nil {
+	if db, err := openDB(); err != nil {
 		log.Fatalf("Unable to open DB: %v", err)
+	} else if err := db.Ping(); err != nil {
+		log.Fatalf("No connection to DB: %v", err)
 	} else {
-		defer conn.Close()
+		defer db.Close()
 		if err := openConfig(); err != nil {
 			log.Fatalf("Config parsing failed: %v", err)
 		}
@@ -81,7 +83,7 @@ func main() {
 		// Run an infinite loop reading data from TripWatch and synchronising it with the
 		// Firebird DB.
 		for {
-			if errlist := run(conn); len(errlist) > 0 {
+			if errlist := run(db); len(errlist) > 0 {
 				for _, err := range errlist {
 					if errors.Is(err, matchFieldIsZero) {
 						var runerr runError

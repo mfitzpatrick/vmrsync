@@ -45,3 +45,8 @@ func TestIntegDBQuery(t *testing.T) {
 	assert.True(t, name.Valid)
 	assert.Equal(t, "WHITE", strings.TrimSpace(name.String))
 }
+
+func TestRun(t *testing.T) {
+	errlist := run(realDB)
+	assert.Equal(t, 0, len(errlist), "Errors in list: %+v", errlist)
+}
