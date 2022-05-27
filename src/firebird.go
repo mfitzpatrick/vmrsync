@@ -12,6 +12,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var matchFieldIsZero = errors.Errorf("Zero Key Value Error")
+
 type dbError struct {
 	error
 	name      string
@@ -24,8 +26,12 @@ func (e dbError) Unwrap() error {
 }
 
 func (e dbError) String() string {
-	return fmt.Sprintf("DB error \ntable: %s\nstatement: %s",
+	return fmt.Sprintf("DB error on table: %s\n\tstatement: %s\n\t",
 		e.name, e.statement)
+}
+
+func (e dbError) Error() string {
+	return fmt.Sprintf("%s: %s", e.String(), e.error.Error())
 }
 
 type column struct {
@@ -336,7 +342,7 @@ func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
 	if err := forEachColumn("parent", dbObj, func(tableName string, col column) error {
 		if !col.isSequence && reflect.ValueOf(col.value).IsZero() {
 			if col.isMatch {
-				return errors.Errorf("match field cannot be zero")
+				return errors.Wrapf(matchFieldIsZero, "match field cannot be zero")
 			} else {
 				// Don't include values that are the zero-value for that type
 				return nil
@@ -360,7 +366,7 @@ func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
 		} else if !errors.As(err, &dberr) {
 			return errors.Wrapf(err, "tryUpdate returned a coding error")
 		} else if inserr := tryInsert(ctx, db, table, columns); inserr != nil {
-			return errors.Wrapf(err, "send to DB insert table %s", table)
+			return errors.Wrapf(inserr, "send to DB insert table %s", table)
 		}
 	}
 

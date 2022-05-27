@@ -7,12 +7,14 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 )
 
 var tripwatchAPIkey string
 var tripwatchURL string
+var tripwatchPollFrequency time.Duration
 
 var (
 	twNotFound = errors.Errorf("TripWatch item not found")
@@ -54,12 +56,12 @@ func listActivations(ctx context.Context) ([]linkActivationDB, error) {
 		return []linkActivationDB{}, errors.Wrapf(err, "list activations body parse")
 	} else {
 		actList := make([]linkActivationDB, len(ids))
-		for _, v := range ids {
+		for i, v := range ids {
 			if a, err := getOneActivation(ctx, v.ID); err != nil {
 				return []linkActivationDB{},
 					errors.Wrapf(err, "list activations get activation %d", v.ID)
 			} else {
-				actList = append(actList, a)
+				actList[i] = a
 			}
 		}
 		return actList, nil

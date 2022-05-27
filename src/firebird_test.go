@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"reflect"
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -125,4 +127,21 @@ func TestAggregateFields(t *testing.T) {
 	assert.Equal(t, 153, data.Job.GPS.LongD)
 	assert.Equal(t, 41, data.Job.GPS.LongM)
 	assert.InDelta(t, 59.9, data.Job.GPS.LongS, 0.1)
+}
+
+func TestSendToDB(t *testing.T) {
+	// Check that zero-value keys return the correct error type
+	data := &linkActivationDB{
+		ID: 42,
+		Job: Job{
+			VMRVessel: VMRVessel{
+				ID:   1,
+				Name: "MR1",
+			},
+		},
+	}
+	err := sendToDB(context.Background(), nil, data)
+	if assert.NotNil(t, err) {
+		assert.True(t, errors.Is(err, matchFieldIsZero))
+	}
 }

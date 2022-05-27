@@ -1,4 +1,5 @@
 tripwatch:
   url: "http://localhost:8888/api"
   apikey: "no-api-key"
+  poll: "60s"
 
