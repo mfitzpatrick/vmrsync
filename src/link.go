@@ -21,7 +21,7 @@ import (
 
 type VMRVessel struct {
 	ID             int       `firebird:"JOBDUTYVESSELNO" json:"activationsrvsequence"`
-	Name           string    `firebird:"JOBDUTYVESSELNAME,match" json:"activationsrvvessel"`
+	Name           string    `firebird:"JOBDUTYVESSELNAME,match" len:"30" json:"activationsrvvessel"`
 	StartHoursPort IntString `firebird:"JOBHOURSSTART" json:"activationsrvenginehours1start"`
 	StartHoursStbd IntString `json:"activationsrvenginehours2start"`
 	EndHoursPort   IntString `firebird:"JOBHOURSEND" json:"activationsrvenginehours1end"`
@@ -29,20 +29,20 @@ type VMRVessel struct {
 }
 
 type AssistedVessel struct {
-	Rego       string     `firebird:"JOBVESSELREGO" json:"activationsdvvesselsregistration"`
-	Name       string     `firebird:"JOBVESSELNAME" json:"activationsdvvesselsname"`
-	Length     LengthEnum `firebird:"JOBLOA" json:"activationsdvvesselslength"`
-	Type       string     `firebird:"JOBVESSELTYPE" json:"activationsdvvesselstype"`
-	Propulsion string     `firebird:"JOBPROPULSION" json:"activationsdvvesselsenginetype"`
+	Rego       string     `firebird:"JOBVESSELREGO" len:"10" json:"activationsdvvesselsregistration"`
+	Name       string     `firebird:"JOBVESSELNAME" len:"30" json:"activationsdvvesselsname"`
+	Length     LengthEnum `firebird:"JOBLOA" len:"10" json:"activationsdvvesselslength"`
+	Type       string     `firebird:"JOBVESSELTYPE" len:"20" json:"activationsdvvesselstype"`
+	Propulsion string     `firebird:"JOBPROPULSION" len:"20" json:"activationsdvvesselsenginetype"`
 	EngineQTY  int        `json:"activationsdvvesselsenginequantity"`
 	NumAdults  int        `firebird:"JOBADULTS" json:"activationsdvpobadult"`
 	NumKids    int        `firebird:"JOBCHILDREN" json:"activationsdvpobchildren"`
 }
 
 type Emergency struct {
-	Emergency         CustomBool     `firebird:"JOBEMERGENCY"`
-	PoliceNum         string         `firebird:"JOBQASNO" json:"activationspoliceincidentnumber"`
-	Notified          CustomBool     `firebird:"JOBPOLICE" json:"activationspolicenotified"`
+	Emergency         CustomBool     `firebird:"JOBEMERGENCY" len:"1"`
+	PoliceNum         string         `firebird:"JOBQASNO" len:"10" json:"activationspoliceincidentnumber"`
+	Notified          CustomBool     `firebird:"JOBPOLICE" len:"1" json:"activationspolicenotified"`
 	PoliceName        string         `json:"activationspolicenotifiedcontact"`
 	Time              CustomJSONTime `json:"activationspolicenotifiedtime"`
 	AgenciesAttending StringList     `json:"activationsqasattending"`
@@ -64,24 +64,24 @@ type GPS struct {
 
 type Weather struct {
 	Forecast  string        `json:"activationsactivationweatherforecast"`
-	WindSpeed WindSpeedEnum `firebird:"JOBWINDSPEED"`
-	WindDir   WindDirEnum   `firebird:"JOBWINDDIRECTION"`
-	RainState string        `firebird:"JOBWEATHER"`
+	WindSpeed WindSpeedEnum `firebird:"JOBWINDSPEED" len:"20"`
+	WindDir   WindDirEnum   `firebird:"JOBWINDDIRECTION" len:"3"`
+	RainState string        `firebird:"JOBWEATHER" len:"20"`
 }
 
 type Job struct {
 	ID          int            `firebird:"JOBDUTYSEQUENCE,id"`
 	StartTime   CustomJSONTime `firebird:"JOBTIMEOUT,match" json:"activationsrvdeparttime"`
 	EndTime     CustomJSONTime `firebird:"JOBTIMEIN" json:"activationsrvreturntime"`
-	Type        string         `firebird:"JOBTYPE" json:"activationstype"`
-	Action      string         `firebird:"JOBACTIONTAKEN" json:"activationsdvactionrequested"`
+	Type        string         `firebird:"JOBTYPE" len:"20" json:"activationstype"`
+	Action      string         `firebird:"JOBACTIONTAKEN" len:"20" json:"activationsdvactionrequested"`
 	Purpose     string         `json:"activationspurpose"`
-	Comments    string         `firebird:"JOBDETAILS" json:"activationscomments"`
+	Comments    string         `firebird:"JOBDETAILS" len:"96" json:"activationscomments"`
 	Donation    IntString      `firebird:"JOBDONATION" json:"activationsdonationreceived"`
-	Frequency   string         `firebird:"JOBFREQUENCY"`
-	WaterLimits string         `firebird:"JOBWATERLIMITS" json:"activationsoperationsareaclassification"`
-	SeaState    SeaStateEnum   `firebird:"JOBSEAS" json:"activationsobservedseastate"`
-	Commercial  CustomBool     `firebird:"JOBCOMMERCIALVESSEL"`
+	Frequency   string         `firebird:"JOBFREQUENCY" len:"30"`
+	WaterLimits string         `firebird:"JOBWATERLIMITS" len:"20" json:"activationsoperationsareaclassification"`
+	SeaState    SeaStateEnum   `firebird:"JOBSEAS" len:"20" json:"activationsobservedseastate"`
+	Commercial  CustomBool     `firebird:"JOBCOMMERCIALVESSEL" len:"1"`
 	VMRVessel
 	AssistedVessel
 	Emergency

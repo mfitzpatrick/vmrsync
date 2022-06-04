@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"reflect"
+	"strconv"
 	"testing"
 	"time"
 
@@ -51,4 +52,29 @@ func TestSubstringAssumption(t *testing.T) {
 	s = "\"Hello'"
 	assert.Equal(t, '"', rune(s[0]))
 	assert.Equal(t, '\'', rune(s[len(s)-1]))
+}
+
+// Helper function for TestStrlenField below
+func findAllStrings(t *testing.T, obj reflect.Value) {
+	for i := 0; i < obj.NumField(); i++ {
+		structVal := obj.Field(i)
+		structField := obj.Type().Field(i)
+		firebirdTag := structField.Tag.Get("firebird")
+		lenTag := structField.Tag.Get("len")
+		if structVal.Kind() == reflect.String && firebirdTag != "" {
+			if assert.NotEqual(t, "", lenTag, "Field %s", firebirdTag) {
+				length, err := strconv.ParseInt(lenTag, 10, 32)
+				assert.Nil(t, err, "Field %s", firebirdTag)
+				assert.Less(t, 0, int(length), "Field %s", firebirdTag)
+			}
+		}
+		if structVal.Kind() == reflect.Struct && structVal.Type() != reflect.TypeOf(CustomJSONTime{}) {
+			findAllStrings(t, structVal)
+		}
+	}
+}
+
+func TestStrlenField(t *testing.T) {
+	obj := reflect.ValueOf(linkActivationDB{})
+	findAllStrings(t, obj)
 }

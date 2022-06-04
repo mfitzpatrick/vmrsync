@@ -38,6 +38,7 @@ type column struct {
 	name       string
 	isMatch    bool
 	isSequence bool
+	maxStrlen  int
 	value      interface{}
 }
 
@@ -53,6 +54,7 @@ func forEachColumn(tableName string, obj reflect.Value, handler firebirdColHandl
 		structField := obj.Type().Field(i)
 		isMatch := false
 		isSequence := false
+		maxStrlen := 0
 		firebirdTag := structField.Tag.Get("firebird")
 		if fbTags := strings.Split(firebirdTag, ","); len(fbTags) > 1 {
 			firebirdTag = fbTags[0]
@@ -63,6 +65,13 @@ func forEachColumn(tableName string, obj reflect.Value, handler firebirdColHandl
 				case "id":
 					isSequence = true
 				}
+			}
+		}
+		if structVal.Kind() == reflect.String && firebirdTag != "" {
+			if l, err := strconv.ParseInt(structField.Tag.Get("len"), 10, 32); err != nil {
+				return errors.Wrapf(err, "firebird length not parseable in field %s", firebirdTag)
+			} else {
+				maxStrlen = int(l)
 			}
 		}
 		if structVal.Kind() == reflect.Struct && structVal.Type() != reflect.TypeOf(CustomJSONTime{}) {
@@ -80,6 +89,7 @@ func forEachColumn(tableName string, obj reflect.Value, handler firebirdColHandl
 			name:       firebirdTag,
 			isMatch:    isMatch,
 			isSequence: isSequence,
+			maxStrlen:  maxStrlen,
 			value:      structVal.Interface(),
 		}); err != nil {
 			return errors.Wrapf(err, "firebird for each column (%s.%s) handler", tableName, firebirdTag)
@@ -348,6 +358,12 @@ func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
 	tables := make(map[string][]column)
 	dbObj := reflect.ValueOf(*data)
 	if err := forEachColumn("parent", dbObj, func(tableName string, col column) error {
+		// Truncate string lengths if required
+		if s, ok := col.value.(string); ok {
+			if len(s) > col.maxStrlen {
+				col.value = s[:col.maxStrlen]
+			}
+		}
 		if !col.isSequence && reflect.ValueOf(col.value).IsZero() {
 			if col.isMatch {
 				return errors.Wrapf(matchFieldIsZero, "match field cannot be zero")

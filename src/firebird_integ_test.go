@@ -138,11 +138,10 @@ func TestSendToDB_NewRecord(t *testing.T) {
 	dbObj = &linkActivationDB{
 		ID: 22,
 		Job: Job{
-			StartTime: CustomJSONTime(getTimeUTC(t, "2022-01-16T06:09:32Z")),
-			EndTime:   CustomJSONTime(getTimeUTC(t, "2022-01-16T08:00:00Z")),
-			Type:      "Assist",
-			// Action:      "Tow, refloat, medical assist",
-			Action:      "Tow",
+			StartTime:   CustomJSONTime(getTimeUTC(t, "2022-01-16T06:09:32Z")),
+			EndTime:     CustomJSONTime(getTimeUTC(t, "2022-01-16T08:00:00Z")),
+			Type:        "Assist",
+			Action:      "Tow, refloat, medical assist",
 			Comments:    "This is the comments field.",
 			Donation:    IntString(200),
 			WaterLimits: "E",
@@ -158,7 +157,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 			},
 			Emergency: Emergency{
 				PoliceNum: "987654321",
-				// Notified:  true,
+				Notified:  "t",
 			},
 			GPS: GPS{
 				TWLatLong: "-27.5,153.7",
