@@ -40,7 +40,7 @@ type AssistedVessel struct {
 }
 
 type Emergency struct {
-	Emergency         bool           `firebird:"JOBEMERGENCY"`
+	Emergency         CustomBool     `firebird:"JOBEMERGENCY"`
 	PoliceNum         string         `firebird:"JOBQASNO" json:"activationspoliceincidentnumber"`
 	Notified          CustomBool     `firebird:"JOBPOLICE" json:"activationspolicenotified"`
 	PoliceName        string         `json:"activationspolicenotifiedcontact"`
@@ -81,7 +81,7 @@ type Job struct {
 	Frequency   string         `firebird:"JOBFREQUENCY"`
 	WaterLimits string         `firebird:"JOBWATERLIMITS" json:"activationsoperationsareaclassification"`
 	SeaState    SeaStateEnum   `firebird:"JOBSEAS" json:"activationsobservedseastate"`
-	Commercial  bool           `firebird:"JOBCOMMERCIALVESSEL"`
+	Commercial  CustomBool     `firebird:"JOBCOMMERCIALVESSEL"`
 	VMRVessel
 	AssistedVessel
 	Emergency
@@ -131,23 +131,23 @@ func (tm CustomJSONTime) Value() (driver.Value, error) {
 	return time.Time(tm), nil
 }
 
-type CustomBool bool //TripWatch boolean contained as a string or normal bool
+type CustomBool string //TripWatch boolean contained as a string or normal bool
 
 func (b *CustomBool) UnmarshalJSON(bytes []byte) error {
 	rawString := strings.ToLower(strings.Trim(strings.TrimSpace(string(bytes)), "\""))
 	var realBool bool
 	if err := json.Unmarshal([]byte(rawString), &realBool); err == nil {
-		*b = CustomBool(realBool)
+		*b = CustomBool(strconv.FormatBool(realBool)[:1])
 		return nil
 	} else if rawString == "null" {
-		*b = CustomBool(false)
+		*b = CustomBool("f")
 		return nil
 	} else {
 		switch rawString {
 		case "null", "false", "no":
-			*b = CustomBool(false)
+			*b = CustomBool("f")
 		case "true", "yes":
-			*b = CustomBool(true)
+			*b = CustomBool("t")
 		default:
 			return errors.Errorf("CustomBool JSON unmarshal of '%s' failed", rawString)
 		}

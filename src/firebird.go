@@ -228,8 +228,12 @@ func aggregateFields(data *linkActivationDB) error {
 		return errors.Errorf("Data pointer cannot be nil")
 	}
 
-	data.Job.Emergency.Emergency = bool(data.Job.Emergency.Notified)
-	data.Job.Commercial = strings.HasSuffix(data.Job.AssistedVessel.Rego, "C")
+	data.Job.Emergency.Emergency = data.Job.Emergency.Notified
+	if strings.HasSuffix(data.Job.AssistedVessel.Rego, "C") {
+		data.Job.Commercial = "t"
+	} else {
+		data.Job.Commercial = "f"
+	}
 	if data.Job.Weather.Forecast != "" {
 		if err := parseForecast(&data.Job.Weather); err != nil {
 			return errors.Wrapf(err, "aggregateFields parsing forecast failed")
