@@ -20,12 +20,13 @@ import (
  */
 
 type VMRVessel struct {
-	ID             int       `firebird:"JOBDUTYVESSELNO" json:"activationsrvsequence"`
-	Name           string    `firebird:"JOBDUTYVESSELNAME,match" len:"30" json:"activationsrvvessel"`
-	StartHoursPort IntString `firebird:"JOBHOURSSTART" json:"activationsrvenginehours1start"`
-	StartHoursStbd IntString `json:"activationsrvenginehours2start"`
-	EndHoursPort   IntString `firebird:"JOBHOURSEND" json:"activationsrvenginehours1end"`
-	EndHoursStbd   IntString `json:"activationsrvenginehours2end"`
+	ID             int        `firebird:"JOBDUTYVESSELNO" json:"activationsrvsequence"`
+	Name           string     `firebird:"JOBDUTYVESSELNAME,match" len:"30" json:"activationsrvvessel"`
+	StartHoursPort IntString  `firebird:"JOBHOURSSTART" json:"activationsrvenginehours1start"`
+	StartHoursStbd IntString  `json:"activationsrvenginehours2start"`
+	EndHoursPort   IntString  `firebird:"JOBHOURSEND" json:"activationsrvenginehours1end"`
+	EndHoursStbd   IntString  `json:"activationsrvenginehours2end"`
+	CrewList       StringList `json:"activationsrvcrew"`
 }
 
 type AssistedVessel struct {
@@ -70,7 +71,8 @@ type Weather struct {
 }
 
 type Job struct {
-	ID          int            `firebird:"JOBDUTYSEQUENCE,id"`
+	DutyLogID   int            `firebird:"JOBDUTYSEQUENCE"`
+	ID          int            `firebird:"JOBJOBSEQUENCE,id"`
 	StartTime   CustomJSONTime `firebird:"JOBTIMEOUT,match" json:"activationsrvdeparttime"`
 	EndTime     CustomJSONTime `firebird:"JOBTIMEIN" json:"activationsrvreturntime"`
 	Type        string         `firebird:"JOBTYPE" len:"20" json:"activationstype"`
@@ -94,6 +96,46 @@ type linkActivationDB struct {
 	Created CustomJSONTime `json:"created_at"`
 	Updated CustomJSONTime `json:"updated_at"`
 	Job     `firebird:"DUTYJOBS"`
+}
+
+type DutyLogTable struct {
+	DutyLog struct {
+		ID       int       `firebird:"DUTYSEQUENCE,id"`
+		Date     time.Time `firebird:"DUTYDATE"`
+		CrewName string    `firebird:"CREW" len:"10"`
+	} `firebird:"DUTYLOG"`
+}
+
+type Member struct {
+	ID     int    `firebird:"MEMBERNOLOCAL,id"`
+	Email1 string `firebird:"EMAIL1" len:"96"`
+	Email2 string `firebird:"EMAIL2" len:"96"`
+}
+
+type CrewOnDuty struct {
+	ID       int `firebird:"DUTYSEQUENCE,id"`
+	MemberNo int `firebird:"CREWMEMBER" join:"MEMBERS"`
+	RankID   int `firebird:"CREWRANKING"`
+}
+
+type JobCrew struct {
+	DutyCrewID int        `firebird:"CREWDUTYSEQUENCE" join:"DUTYCREWS"`
+	JobID      int        `firebird:"CREWJOBSEQUENCE"`
+	MemberID   int        `firebird:"CREWMEMBER" join:"MEMBERS"`
+	RankID     int        `firebird:"CREWRANKING"`
+	IsMaster   CustomBool `firebird:"SKIPPER" len:"1"`
+	IsOnJob    CustomBool `firebird:"CREWONJOB" len:"1"`
+}
+
+type crewInfo struct {
+	Member     `firebird:"MEMBERS"`
+	CrewOnDuty `firebird:"DUTYCREWS"`
+}
+
+type crewOnJob struct {
+	Member     `firebird:"MEMBERS"`
+	CrewOnDuty `firebird:"DUTYCREWS"`
+	JobCrew    `firebird:"DUTYJOBSCREW"`
 }
 
 /*
@@ -137,17 +179,21 @@ func (b *CustomBool) UnmarshalJSON(bytes []byte) error {
 	rawString := strings.ToLower(strings.Trim(strings.TrimSpace(string(bytes)), "\""))
 	var realBool bool
 	if err := json.Unmarshal([]byte(rawString), &realBool); err == nil {
-		*b = CustomBool(strconv.FormatBool(realBool)[:1])
+		if realBool {
+			*b = CustomBool("Y")
+		} else {
+			*b = CustomBool("N")
+		}
 		return nil
 	} else if rawString == "null" {
-		*b = CustomBool("f")
+		*b = CustomBool("N")
 		return nil
 	} else {
 		switch rawString {
 		case "null", "false", "no":
-			*b = CustomBool("f")
+			*b = CustomBool("N")
 		case "true", "yes":
-			*b = CustomBool("t")
+			*b = CustomBool("Y")
 		default:
 			return errors.Errorf("CustomBool JSON unmarshal of '%s' failed", rawString)
 		}

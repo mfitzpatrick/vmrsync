@@ -40,6 +40,42 @@ func TestDBWorks(t *testing.T) {
 	}
 }
 
+func TestDBInsertReturningClause(t *testing.T) {
+	// Sadly, not supported by Firebird 2.5
+	_, err := realDB.QueryContext(context.Background(),
+		"UPDATE JOBLOA='8.5m' WHERE JOBDUTYSEQUENCE=1 RETURNING JOBDUTYSEQUENCE")
+	assert.NotNil(t, err)
+}
+
+func TestGetLatestDutyLogEntry(t *testing.T) {
+	table, err := getLatestDutyLogEntry(context.Background(), realDB)
+	assert.Nil(t, err)
+	assert.Equal(t, 2, table.DutyLog.ID)
+	assert.Equal(t, "WHITE", strings.TrimSpace(table.DutyLog.CrewName))
+}
+
+func TestFindMemberForEmail(t *testing.T) {
+	mbr, err := findMemberForEmail(context.Background(), realDB, "bugs.bunny@mrq.org.au")
+	assert.Nil(t, err)
+	assert.Equal(t, 3, mbr.ID)
+}
+
+func TestFindRankingForMember(t *testing.T) {
+	rank, err := findRankingForMember(context.Background(), realDB, 2)
+	assert.Nil(t, err)
+	assert.Equal(t, 12, rank)
+}
+
+func TestPullMemberRecordsByEmail(t *testing.T) {
+	member, err := pullMemberRecordsByEmail(context.Background(), realDB, "marvin.the.martian@mrq.org.au")
+	assert.Nil(t, err)
+	assert.Equal(t, 12, member.CrewOnDuty.RankID, "Record found %+v", member)
+
+	member, err = pullMemberRecordsByEmail(context.Background(), realDB, "bugs.bunny@mrq.org.au")
+	assert.Nil(t, err)
+	assert.Equal(t, 3, member.CrewOnDuty.RankID, "Record found %+v", member)
+}
+
 func TestSendToDB_ExistingRecord(t *testing.T) {
 	dbObj := &linkActivationDB{
 		ID: 42,
@@ -49,6 +85,9 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 			VMRVessel: VMRVessel{
 				ID:   2,
 				Name: "MR2",
+				// CrewList: StringList{
+				// "bugs.bunny@mrq.org.au",
+				// },
 			},
 		},
 	}
@@ -56,23 +95,55 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Check that data in DB was updated correctly
+	var jobID int
 	rows, err := realDB.QueryContext(context.Background(),
-		"SELECT JOBDUTYSEQUENCE,JOBSEAS FROM DUTYJOBS"+
+		"SELECT JOBJOBSEQUENCE,JOBSEAS FROM DUTYJOBS"+
 			" WHERE JOBTIMEOUT='2022-01-01 06:00:35' AND JOBDUTYVESSELNAME='MR2'")
 	if assert.Nil(t, err) {
 		defer rows.Close()
 		assert.True(t, rows.Next())
-		var seq int
 		var seastate string
-		err = rows.Scan(&seq, &seastate)
+		err = rows.Scan(&jobID, &seastate)
 		assert.Nil(t, err)
 		assert.Equal(t, "calm", strings.TrimSpace(seastate))
-		assert.Equal(t, 1, seq)
+		assert.Equal(t, 1, jobID)
+		assert.False(t, rows.Next())
+	}
+
+	// Update the crew list
+	dbObj = &linkActivationDB{
+		ID: 88,
+		Job: Job{
+			StartTime: CustomJSONTime(getTimeUTC(t, "2022-01-01T13:10:00Z")),
+			VMRVessel: VMRVessel{
+				ID:   4,
+				Name: "MR5",
+				CrewList: StringList{
+					"bugs.bunny@mrq.org.au",
+				},
+			},
+		},
+	}
+	jobID = 3
+	err = sendToDB(context.Background(), realDB, dbObj)
+	assert.Nil(t, err)
+	rows, err = realDB.QueryContext(context.Background(),
+		"SELECT CREWMEMBER,CREWRANKING FROM DUTYJOBSCREW"+
+			" WHERE CREWJOBSEQUENCE=?", jobID)
+	if assert.Nil(t, err) {
+		defer rows.Close()
+		assert.True(t, rows.Next())
+		var memberID, rank int
+		err = rows.Scan(&memberID, &rank)
+		assert.Nil(t, err)
+		assert.Equal(t, 3, memberID)
+		assert.Equal(t, 3, rank)
 		assert.False(t, rows.Next())
 	}
 }
 
 func TestSendToDB_NewRecord(t *testing.T) {
+	const MAX_PRELOADED_SEQUENCE = 3
 	dbObj := &linkActivationDB{
 		ID: 482,
 		Job: Job{
@@ -89,17 +160,18 @@ func TestSendToDB_NewRecord(t *testing.T) {
 
 	// Check that data in DB was updated correctly
 	rows, err := realDB.QueryContext(context.Background(),
-		"SELECT JOBDUTYSEQUENCE,JOBSEAS FROM DUTYJOBS"+
+		"SELECT JOBDUTYSEQUENCE,JOBJOBSEQUENCE,JOBSEAS FROM DUTYJOBS"+
 			" WHERE JOBTIMEOUT='2022-02-07 13:50:12' AND JOBDUTYVESSELNAME='MR4'")
 	if assert.Nil(t, err) {
 		defer rows.Close()
 		assert.True(t, rows.Next())
-		var seq int
+		var dutyseq, seq int
 		var seastate string
-		err = rows.Scan(&seq, &seastate)
+		err = rows.Scan(&dutyseq, &seq, &seastate)
 		assert.Nil(t, err)
 		assert.Equal(t, "moderate", strings.TrimSpace(seastate))
-		assert.Equal(t, 3, seq)
+		assert.Equal(t, 2, dutyseq)
+		assert.Equal(t, MAX_PRELOADED_SEQUENCE+1, seq)
 		assert.False(t, rows.Next())
 	}
 
@@ -112,6 +184,9 @@ func TestSendToDB_NewRecord(t *testing.T) {
 			VMRVessel: VMRVessel{
 				ID:   2,
 				Name: "MARINERESCUE2",
+				CrewList: StringList{
+					"bugs.bunny@mrq.org.au",
+				},
 			},
 		},
 	}
@@ -120,17 +195,30 @@ func TestSendToDB_NewRecord(t *testing.T) {
 
 	// Check that data in DB was updated correctly
 	rows, err = realDB.QueryContext(context.Background(),
-		"SELECT JOBDUTYSEQUENCE,JOBSEAS FROM DUTYJOBS"+
+		"SELECT JOBDUTYSEQUENCE,JOBJOBSEQUENCE,JOBSEAS FROM DUTYJOBS"+
 			" WHERE JOBTIMEOUT='2022-02-12 16:01:56' AND JOBDUTYVESSELNAME='MARINERESCUE2'")
 	if assert.Nil(t, err) {
 		defer rows.Close()
 		assert.True(t, rows.Next())
-		var seq int
+		var dutyseq, seq int
 		var seastate string
-		err = rows.Scan(&seq, &seastate)
+		err = rows.Scan(&dutyseq, &seq, &seastate)
 		assert.Nil(t, err)
 		assert.Equal(t, "rough", strings.TrimSpace(seastate))
-		assert.Equal(t, 4, seq)
+		assert.Equal(t, MAX_PRELOADED_SEQUENCE+2, seq)
+		assert.Equal(t, 2, dutyseq)
+		assert.False(t, rows.Next())
+	}
+	rows, err = realDB.QueryContext(context.Background(),
+		"SELECT CREWMEMBER,CREWRANKING FROM DUTYJOBSCREW WHERE CREWJOBSEQUENCE=?", MAX_PRELOADED_SEQUENCE+2)
+	if assert.Nil(t, err) {
+		defer rows.Close()
+		assert.True(t, rows.Next())
+		var memberNo, rankID int
+		err = rows.Scan(&memberNo, &rankID)
+		assert.Nil(t, err)
+		assert.Equal(t, 3, memberNo)
+		assert.Equal(t, 3, rankID)
 		assert.False(t, rows.Next())
 	}
 
@@ -180,7 +268,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 
 	// Check that data in DB was updated correctly
 	rows, err = realDB.QueryContext(context.Background(),
-		"SELECT JOBDUTYSEQUENCE,JOBSEAS FROM DUTYJOBS"+
+		"SELECT JOBJOBSEQUENCE,JOBSEAS FROM DUTYJOBS"+
 			" WHERE JOBTIMEOUT='2022-01-16 06:09:32' AND JOBDUTYVESSELNAME='MARINERESCUE2'")
 	if assert.Nil(t, err) {
 		defer rows.Close()
@@ -190,7 +278,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 		err = rows.Scan(&seq, &seastate)
 		assert.Nil(t, err)
 		assert.Equal(t, "Calm", strings.TrimSpace(seastate))
-		assert.Equal(t, 5, seq)
+		assert.Equal(t, MAX_PRELOADED_SEQUENCE+3, seq)
 		assert.False(t, rows.Next())
 	}
 }

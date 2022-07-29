@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+#    volumes:
+#      - "/Users/mfitz/Downloads/VMRMEMBERS.FDB:/firebird/data/VMRMEMBERS.FDB"
     ports:
       - "3050:3050"
 

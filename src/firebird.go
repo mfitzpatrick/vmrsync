@@ -231,6 +231,175 @@ func tryInsert(ctx context.Context, db *sql.DB, tableName string, columns []colu
 	return nil
 }
 
+func getLatestDutyLogEntry(ctx context.Context, db *sql.DB) (DutyLogTable, error) {
+	stmt := "SELECT DUTYSEQUENCE,MAX(DUTYDATE),CREW FROM DUTYLOG GROUP BY DUTYSEQUENCE,CREW"
+	if rows, err := db.QueryContext(ctx, stmt); err != nil {
+		return DutyLogTable{}, errors.Wrapf(dbError{
+			error:     err,
+			name:      "DUTYLOG",
+			statement: stmt,
+		}, "latest duty log entry running DB query")
+	} else {
+		defer rows.Close()
+		entry := DutyLogTable{}
+		for rows.Next() {
+			if err := rows.Scan(
+				&entry.DutyLog.ID,
+				&entry.DutyLog.Date,
+				&entry.DutyLog.CrewName,
+			); err != nil {
+				return DutyLogTable{}, errors.Wrapf(dbError{
+					error:     err,
+					name:      "DUTYLOG",
+					statement: stmt,
+				}, "latest duty log entry scanning table columns")
+			}
+		}
+		return entry, nil
+	}
+}
+
+func findMemberForEmail(ctx context.Context, db *sql.DB, email string) (Member, error) {
+	stmt := "SELECT MEMBERNOLOCAL FROM MEMBERS WHERE EMAIL2=?"
+	if rows, err := db.QueryContext(ctx, stmt, email); err != nil {
+		return Member{}, errors.Wrapf(dbError{
+			error:     err,
+			name:      "MEMBERS",
+			statement: stmt,
+		}, "find member for email %s", email)
+	} else {
+		defer rows.Close()
+		mbr := Member{}
+		for rows.Next() {
+			if err := rows.Scan(&mbr.ID); err != nil {
+				return Member{}, errors.Wrapf(dbError{
+					error:     err,
+					name:      "MEMBERS",
+					statement: stmt,
+				}, "find member for email %s reading rows", email)
+			}
+		}
+		return mbr, nil
+	}
+}
+
+func findRankingForMember(ctx context.Context, db *sql.DB, id int) (int, error) {
+	stmt := "SELECT FIRST 1 CREWRANKING FROM DUTYCREWS WHERE CREWMEMBER=?" +
+		" ORDER BY DUTYSEQUENCE DESC"
+	if rows, err := db.QueryContext(ctx, stmt, id); err != nil {
+		return 0, errors.Wrapf(dbError{
+			error:     err,
+			name:      "DUTYCREWS",
+			statement: stmt,
+		}, "find ranking for member %d", id)
+	} else {
+		defer rows.Close()
+		var rank int
+		for rows.Next() {
+			if err := rows.Scan(&rank); err != nil {
+				return 0, errors.Wrapf(dbError{
+					error:     err,
+					name:      "DUTYCREWS",
+					statement: stmt,
+				}, "find ranking for member %d reading rows", id)
+			}
+		}
+		return rank, nil
+	}
+}
+
+func pullMemberRecordsByEmail(ctx context.Context, db *sql.DB, email string) (crewInfo, error) {
+	stmt := "SELECT M.MEMBERNOLOCAL,M.EMAIL2,C.DUTYSEQUENCE,C.CREWMEMBER,C.CREWRANKING" +
+		" FROM MEMBERS M INNER JOIN DUTYCREWS C ON M.MEMBERNOLOCAL=C.CREWMEMBER" +
+		" WHERE M.EMAIL2=?"
+	if rows, err := db.QueryContext(ctx, stmt, email); err != nil {
+		return crewInfo{}, errors.Wrapf(dbError{
+			error:     err,
+			name:      "MEMBERS & DUTYCREWS",
+			statement: stmt,
+		}, "trying to fetch member records")
+	} else {
+		defer rows.Close()
+		crew := crewInfo{}
+
+		for rows.Next() {
+			if err := rows.Scan(&crew.Member.ID, &crew.Member.Email2,
+				&crew.CrewOnDuty.ID, &crew.CrewOnDuty.MemberNo, &crew.CrewOnDuty.RankID,
+			); err != nil {
+				return crewInfo{}, errors.Wrapf(dbError{
+					error:     err,
+					name:      "MEMBERS & DUTYCREWS",
+					statement: stmt,
+				}, "pulling data from row")
+			} else {
+				crew.Member.Email2 = strings.TrimSpace(crew.Member.Email2)
+			}
+		}
+		return crew, nil
+	}
+}
+
+func getJobID(ctx context.Context, db *sql.DB, job Job) (int, error) {
+	query := fmt.Sprintf("SELECT JOBJOBSEQUENCE FROM DUTYJOBS" +
+		" WHERE JOBTIMEOUT=? AND JOBDUTYVESSELNAME=?")
+	if rows, err := db.QueryContext(ctx, query, job.StartTime, job.VMRVessel.Name); err != nil {
+		return 0, errors.Wrapf(err, "fetch job ID for time %s and vessel %s",
+			job.StartTime, job.VMRVessel.Name)
+	} else {
+		defer rows.Close()
+		if rows.Next() {
+			if err := rows.Scan(&job.ID); err != nil {
+				return 0, errors.Wrapf(err, "fetch job ID row scan")
+			}
+		}
+		if rows.Next() {
+			return job.ID, errors.Errorf("getJobID returned multiple rows")
+		}
+		return job.ID, nil
+	}
+}
+
+// Add relevant crew to the crew table, linked to the job record
+func addCrewForJob(ctx context.Context, db *sql.DB, job Job) error {
+	const TBL = "DUTYJOBSCREW"
+	if job.ID == 0 {
+		if jobID, err := getJobID(ctx, db, job); err != nil {
+			return errors.Wrapf(err, "addCrewForJob ID not found and cannot be 0")
+		} else {
+			job.ID = jobID
+		}
+	}
+	for _, email := range job.VMRVessel.CrewList {
+		if crew, err := pullMemberRecordsByEmail(ctx, db, email); err != nil {
+			return errors.Wrapf(err, "member records for user '%s'", email)
+		} else {
+			jc := JobCrew{
+				DutyCrewID: crew.CrewOnDuty.ID,
+				JobID:      job.ID,
+				MemberID:   crew.CrewOnDuty.MemberNo,
+				RankID:     crew.CrewOnDuty.RankID,
+				IsMaster:   CustomBool("N"),
+				IsOnJob:    CustomBool("Y"),
+			}
+			columns := []column{}
+			o := reflect.ValueOf(crewOnJob{JobCrew: jc})
+			if err := forEachColumn("parent", o, func(tableName string, col column) error {
+				if tableName == TBL {
+					columns = append(columns, col)
+				}
+				return nil
+			}); err != nil {
+				return errors.Wrapf(err, "fetch col names for table %s", TBL)
+			}
+			if err := tryInsert(ctx, db, TBL, columns); err != nil {
+				return errors.Wrapf(err, "insert member records for job %d user '%s'",
+					job.ID, email)
+			}
+		}
+	}
+	return nil
+}
+
 // For fields that are not automatically prefilled by data input from TripWatch, manually update
 // them with aggregated data from other fields in the record.
 func aggregateFields(data *linkActivationDB) error {
@@ -354,6 +523,15 @@ func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
 		return errors.Wrapf(err, "sendToDB failed to aggregate fields")
 	}
 
+	// Map this to an existing DutyLog table entry
+	// dutyLog := DutyLogTable{}
+	if dl, err := getLatestDutyLogEntry(ctx, db); err != nil {
+		return errors.Wrapf(err, "sendToDB failed to get duty log entry")
+	} else {
+		// dutyLog = dl
+		data.Job.DutyLogID = dl.DutyLog.ID
+	}
+
 	// Build a map of tables that contains the list of columns and associated data
 	tables := make(map[string][]column)
 	dbObj := reflect.ValueOf(*data)
@@ -392,6 +570,10 @@ func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
 		} else if inserr := tryInsert(ctx, db, table, columns); inserr != nil {
 			return errors.Wrapf(inserr, "send to DB insert table %s", table)
 		}
+	}
+
+	if err := addCrewForJob(ctx, db, data.Job); err != nil {
+		return errors.Wrapf(err, "update job add crew rows")
 	}
 
 	return nil

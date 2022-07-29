@@ -10,11 +10,15 @@ func TestCustomBoolUnmarshal(t *testing.T) {
 	var b CustomBool
 	err := (&b).UnmarshalJSON([]byte("false"))
 	assert.Nil(t, err)
-	assert.Equal(t, "f", string(b))
+	assert.Equal(t, "N", string(b))
+
+	err = (&b).UnmarshalJSON([]byte("true"))
+	assert.Nil(t, err)
+	assert.Equal(t, "Y", string(b))
 
 	err = (&b).UnmarshalJSON([]byte("\"Yes\" "))
 	assert.Nil(t, err)
-	assert.Equal(t, "t", string(b))
+	assert.Equal(t, "Y", string(b))
 }
 
 func TestIntStringUnmarshal(t *testing.T) {
