@@ -120,12 +120,13 @@ type CrewOnDuty struct {
 }
 
 type JobCrew struct {
-	DutyCrewID int        `firebird:"CREWDUTYSEQUENCE" join:"DUTYCREWS"`
-	JobID      int        `firebird:"CREWJOBSEQUENCE"`
-	MemberID   int        `firebird:"CREWMEMBER" join:"MEMBERS"`
+	DutyCrewID int        `firebird:"CREWDUTYSEQUENCE,match" join:"DUTYCREWS"`
+	JobID      int        `firebird:"CREWJOBSEQUENCE,match"`
+	MemberID   int        `firebird:"CREWMEMBER,match" join:"MEMBERS"`
 	RankID     int        `firebird:"CREWRANKING"`
 	IsMaster   CustomBool `firebird:"SKIPPER" len:"1"`
 	IsOnJob    CustomBool `firebird:"CREWONJOB" len:"1"`
+	email      string     //Copy of the member's email address if read from DB
 }
 
 type crewInfo struct {
@@ -200,6 +201,10 @@ func (b *CustomBool) UnmarshalJSON(bytes []byte) error {
 		}
 		return nil
 	}
+}
+
+func (b CustomBool) AsBool() bool {
+	return (b == "Y")
 }
 
 type IntString float32 //TripWatch floating-point number contained in a string
@@ -344,4 +349,13 @@ func (s *StringList) UnmarshalJSON(bytes []byte) error {
 		*s = StringList(sList)
 		return nil
 	}
+}
+
+func (s StringList) Has(email string) bool {
+	for _, memberEmail := range s {
+		if memberEmail == email {
+			return true
+		}
+	}
+	return false
 }

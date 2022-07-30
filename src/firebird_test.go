@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"reflect"
 	"testing"
 	"time"
@@ -44,7 +43,13 @@ func TestForEachCol(t *testing.T) {
 	}
 	mainObj := reflect.ValueOf(*db)
 	err := forEachColumn("parent", mainObj, func(tableName string, col column) error {
-		log.Printf("item for %s.%s is %v", tableName, col.name, col.value)
+		if col.name == "JOBDUTYVESSELNAME" {
+			assert.Equal(t, db.Job.VMRVessel.Name, col.value)
+		} else if col.name == "JOBDUTYVESSELNO" {
+			assert.Equal(t, db.Job.VMRVessel.ID, col.value)
+		} else if col.name == "JOBTIMEOUT" {
+			assert.Equal(t, db.Job.StartTime, col.value)
+		}
 		return nil
 	})
 	assert.Nil(t, err)

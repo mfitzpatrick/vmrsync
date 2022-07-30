@@ -4,11 +4,22 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"strings"
 	"testing"
 
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
+
+func rmStringFromSlice(slice []string, toRM string) []string {
+	for i, s := range slice {
+		if s == toRM {
+			return append(slice[:i], slice[i+1:]...)
+		}
+	}
+	return slice
+}
 
 func TestDBWorks(t *testing.T) {
 	conn, err := openDB()
@@ -76,6 +87,69 @@ func TestPullMemberRecordsByEmail(t *testing.T) {
 	assert.Equal(t, 3, member.CrewOnDuty.RankID, "Record found %+v", member)
 }
 
+func (job Job) dbMatchesCrewList(ctx context.Context, db *sql.DB, jobID int) error {
+	var MASTER_QTY int = 1
+	if job.VMRVessel.Master == "" {
+		MASTER_QTY = 0
+	}
+	if crew, err := pullMembersOnJob(ctx, db, jobID); err != nil {
+		return errors.Wrapf(err, "dbMatchesCrewList for job ID %d", jobID)
+	} else if len(crew) != len(job.VMRVessel.CrewList)+MASTER_QTY {
+		stringListCrew := make(StringList, 0, len(crew))
+		for _, c := range crew {
+			if c.IsMaster.AsBool() && c.email != job.VMRVessel.Master {
+				return errors.Errorf("master mismatch on job %d: %s != %s",
+					jobID, c.email, job.VMRVessel.Master)
+			} else if !job.VMRVessel.CrewList.Has(c.email) {
+				return errors.Errorf("crew %s not in list: %v",
+					c.email, job.VMRVessel.CrewList)
+			} else {
+				stringListCrew = append(stringListCrew, c.email)
+			}
+		}
+		for _, email := range job.VMRVessel.CrewList {
+			if !stringListCrew.Has(email) {
+				return errors.Errorf("crew %s in job crew list, but not in DB",
+					email)
+			}
+		}
+		if !stringListCrew.Has(job.VMRVessel.Master) {
+			return errors.Errorf("master %s in job crew list, but not in DB",
+				job.VMRVessel.Master)
+		}
+		return errors.Errorf("Crew length (incl master) mismatched in DB: %d != %d",
+			len(crew), len(job.VMRVessel.CrewList)+MASTER_QTY)
+	} else {
+		// Check for master
+		for _, member := range crew {
+			if member.IsMaster.AsBool() {
+				if member.email != job.VMRVessel.Master {
+					return errors.Errorf("member marked as master (%s) is not job master (%s)",
+						member.email, job.VMRVessel.Master)
+				}
+			}
+		}
+		// Check crewing list
+		for _, email := range job.VMRVessel.CrewList {
+			found := false
+			for _, member := range crew {
+				if email == member.email {
+					found = true
+					if member.IsMaster.AsBool() {
+						return errors.Errorf("Crew %s is marked as master: %v",
+							email, member.IsMaster)
+					}
+					break
+				}
+			}
+			if !found {
+				return errors.Errorf("Missing crew %s", email)
+			}
+		}
+	}
+	return nil
+}
+
 func TestSendToDB_ExistingRecord(t *testing.T) {
 	dbObj := &linkActivationDB{
 		ID: 42,
@@ -85,9 +159,9 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 			VMRVessel: VMRVessel{
 				ID:   2,
 				Name: "MR2",
-				// CrewList: StringList{
-				// "bugs.bunny@mrq.org.au",
-				// },
+				CrewList: StringList{
+					"bugs.bunny@mrq.org.au",
+				},
 			},
 		},
 	}
@@ -127,40 +201,41 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 	jobID = 3
 	err = sendToDB(context.Background(), realDB, dbObj)
 	assert.Nil(t, err)
-	rows, err = realDB.QueryContext(context.Background(),
-		"SELECT CREWMEMBER,CREWRANKING FROM DUTYJOBSCREW"+
-			" WHERE CREWJOBSEQUENCE=?", jobID)
-	if assert.Nil(t, err) {
-		defer rows.Close()
-		assert.True(t, rows.Next())
-		var memberID, rank int
-		err = rows.Scan(&memberID, &rank)
-		assert.Nil(t, err)
-		assert.Equal(t, 3, memberID)
-		assert.Equal(t, 3, rank)
-		assert.False(t, rows.Next())
-	}
+	err = dbObj.Job.dbMatchesCrewList(context.Background(), realDB, jobID)
+	assert.Nil(t, err)
 
-	// Update the crew list
+	// Add master to the crew list
 	dbObj.Job.VMRVessel.Master = "marvin.the.martian@mrq.org.au"
-	jobID = 3
 	err = sendToDB(context.Background(), realDB, dbObj)
 	assert.Nil(t, err)
-	rows, err = realDB.QueryContext(context.Background(),
-		"SELECT CREWMEMBER,CREWRANKING,SKIPPER FROM DUTYJOBSCREW"+
-			" WHERE CREWJOBSEQUENCE=? AND SKIPPER=?", jobID, "Y")
-	if assert.Nil(t, err) {
-		defer rows.Close()
-		assert.True(t, rows.Next())
-		var memberID, rank int
-		var isMaster string
-		err = rows.Scan(&memberID, &rank, &isMaster)
-		assert.Nil(t, err)
-		assert.Equal(t, 2, memberID)
-		assert.Equal(t, 12, rank)
-		assert.Equal(t, "Y", isMaster)
-		assert.False(t, rows.Next())
-	}
+	err = dbObj.Job.dbMatchesCrewList(context.Background(), realDB, jobID)
+	assert.Nil(t, err)
+
+	// Add more crew to the crew list
+	dbObj.Job.VMRVessel.CrewList = append(dbObj.Job.VMRVessel.CrewList,
+		"tasmanian.devil@mrq.org.au", "elmer.fudd@mrq.org.au")
+	err = sendToDB(context.Background(), realDB, dbObj)
+	assert.Nil(t, err)
+	err = dbObj.Job.dbMatchesCrewList(context.Background(), realDB, jobID)
+	assert.Nil(t, err)
+
+	// Change the designated master
+	dbObj.Job.VMRVessel.Master = "tasmanian.devil@mrq.org.au"
+	dbObj.Job.VMRVessel.CrewList = append(dbObj.Job.VMRVessel.CrewList,
+		"marvin.the.martian@mrq.org.au")
+	dbObj.Job.VMRVessel.CrewList = rmStringFromSlice(dbObj.Job.VMRVessel.CrewList,
+		dbObj.VMRVessel.Master)
+	err = sendToDB(context.Background(), realDB, dbObj)
+	assert.Nil(t, err)
+	err = dbObj.Job.dbMatchesCrewList(context.Background(), realDB, jobID)
+	assert.Nil(t, err)
+
+	// Swap the designated master with a new member
+	dbObj.Job.VMRVessel.Master = "tweety.bird@mrq.org.au"
+	err = sendToDB(context.Background(), realDB, dbObj)
+	assert.Nil(t, err)
+	err = dbObj.Job.dbMatchesCrewList(context.Background(), realDB, jobID)
+	assert.Nil(t, err)
 }
 
 func TestSendToDB_NewRecord(t *testing.T) {

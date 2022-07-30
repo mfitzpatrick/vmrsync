@@ -339,6 +339,63 @@ func pullMemberRecordsByEmail(ctx context.Context, db *sql.DB, email string) (cr
 	}
 }
 
+func pullMembersOnJob(ctx context.Context, db *sql.DB, jobID int) ([]JobCrew, error) {
+	if rows, err := db.QueryContext(ctx,
+		"SELECT CREWDUTYSEQUENCE,CREWJOBSEQUENCE,CREWMEMBER,CREWRANKING,SKIPPER,EMAIL2 FROM DUTYJOBSCREW"+
+			" INNER JOIN MEMBERS ON CREWMEMBER=MEMBERNOLOCAL"+
+			" WHERE CREWJOBSEQUENCE=?", jobID); err != nil {
+		return []JobCrew{}, errors.Wrapf(err, "pullMembersOnJob for job ID %d", jobID)
+	} else {
+		defer rows.Close()
+		members := make([]JobCrew, 0, 10)
+		for i := 0; rows.Next(); i++ {
+			crew := JobCrew{}
+			if err := rows.Scan(
+				&crew.DutyCrewID, &crew.JobID, &crew.MemberID,
+				&crew.RankID, &crew.IsMaster,
+				&crew.email,
+			); err != nil {
+				return []JobCrew{}, errors.Wrapf(err, "pullMembersOnJob DB row %d scan", i)
+			}
+			crew.IsMaster = CustomBool(strings.TrimSpace(string(crew.IsMaster)))
+			crew.email = strings.TrimSpace(crew.email)
+			members = append(members, crew)
+		}
+		return members, nil
+	}
+}
+
+func (crew JobCrew) rmFromDB(ctx context.Context, db *sql.DB) error {
+	stmt := "DELETE FROM DUTYJOBSCREW WHERE" +
+		" CREWDUTYSEQUENCE=? AND CREWJOBSEQUENCE=? AND CREWMEMBER=?"
+	if crew.DutyCrewID == 0 || crew.JobID == 0 || crew.MemberID == 0 {
+		return errors.Errorf("IDs cannot be 0: %d, %d, %d",
+			crew.DutyCrewID, crew.JobID, crew.MemberID)
+	}
+	if result, err := db.ExecContext(ctx, stmt,
+		crew.DutyCrewID, crew.JobID, crew.MemberID,
+	); err != nil {
+		return errors.Wrapf(dbError{
+			error:     err,
+			name:      "DUTYJOBSCREW",
+			statement: stmt,
+		}, "rmMember DB exec")
+	} else if rowCount, err := result.RowsAffected(); err != nil {
+		return errors.Wrapf(dbError{
+			error:     err,
+			name:      "DUTYJOBSCREW",
+			statement: stmt,
+		}, "rmMember DB exec result")
+	} else if rowCount != 1 {
+		return errors.Wrapf(dbError{
+			error:     err,
+			name:      "DUTYJOBSCREW",
+			statement: stmt,
+		}, "rmMember rows deleted is %d", rowCount)
+	}
+	return nil
+}
+
 func getJobID(ctx context.Context, db *sql.DB, job Job) (int, error) {
 	query := fmt.Sprintf("SELECT JOBJOBSEQUENCE FROM DUTYJOBS" +
 		" WHERE JOBTIMEOUT=? AND JOBDUTYVESSELNAME=?")
@@ -387,7 +444,12 @@ func addCrewForJob(ctx context.Context, db *sql.DB, job Job) error {
 			}); err != nil {
 				return errors.Wrapf(err, "fetch col names for table %s", TBL)
 			}
-			if err := tryInsert(ctx, db, TBL, columns); err != nil {
+			var dberr dbError
+			if err := tryUpdate(ctx, db, TBL, columns); err == nil {
+				// This worked. Fall out of the statement chain
+			} else if !errors.As(err, &dberr) {
+				return errors.Wrapf(err, "tryUpdate returned a coding error")
+			} else if err := tryInsert(ctx, db, TBL, columns); err != nil {
 				return errors.Wrapf(err, "insert member records for job %d user '%s'",
 					job.ID, email)
 			}
@@ -401,14 +463,36 @@ func addCrewForJob(ctx context.Context, db *sql.DB, job Job) error {
 			job.ID = jobID
 		}
 	}
+	// Add or update crew records for job
 	for _, email := range job.VMRVessel.CrewList {
 		if err := addCrew(email, false); err != nil {
 			return errors.Wrapf(err, "addCrew for crew list")
 		}
 	}
 	if job.VMRVessel.Master != "" {
+		// A master has been designated - add or update them
 		if err := addCrew(job.VMRVessel.Master, true); err != nil {
 			return errors.Wrapf(err, "addCrew for master")
+		}
+	}
+	// Check if any crew rows need to be removed & remove them if needed
+	if members, err := pullMembersOnJob(ctx, db, job.ID); err != nil {
+		return errors.Wrapf(err, "list all crew")
+	} else if len(members) == len(job.VMRVessel.CrewList) {
+		// Length of members list is equivalent, so no need to remove anything. Drop out of chain.
+	} else {
+		excessMembers := make([]JobCrew, 0, len(members))
+		for _, member := range members {
+			if member.email != job.VMRVessel.Master &&
+				!job.VMRVessel.CrewList.Has(member.email) {
+				excessMembers = append(excessMembers, member)
+			}
+		}
+		for _, member := range excessMembers {
+			if err := member.rmFromDB(ctx, db); err != nil {
+				return errors.Wrapf(err, "rm excess crew: %s from job %d",
+					member.email, member.JobID)
+			}
 		}
 	}
 	return nil

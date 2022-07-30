@@ -33,9 +33,7 @@ func TestIntegDBQuery(t *testing.T) {
 	err = dbc.QueryRowContext(context.Background(),
 		"SELECT Count(*) FROM rdb$relations").Scan(&count)
 	assert.Nil(t, err)
-	if assert.Less(t, 0, count) {
-		log.Printf("Relations Count: %d", count)
-	}
+	assert.Equal(t, 101, count)
 
 	var name sql.NullString
 	err = dbc.QueryRowContext(context.Background(),
