@@ -362,14 +362,7 @@ func getJobID(ctx context.Context, db *sql.DB, job Job) (int, error) {
 // Add relevant crew to the crew table, linked to the job record
 func addCrewForJob(ctx context.Context, db *sql.DB, job Job) error {
 	const TBL = "DUTYJOBSCREW"
-	if job.ID == 0 {
-		if jobID, err := getJobID(ctx, db, job); err != nil {
-			return errors.Wrapf(err, "addCrewForJob ID not found and cannot be 0")
-		} else {
-			job.ID = jobID
-		}
-	}
-	for _, email := range job.VMRVessel.CrewList {
+	addCrew := func(email string, isMaster bool) error {
 		if crew, err := pullMemberRecordsByEmail(ctx, db, email); err != nil {
 			return errors.Wrapf(err, "member records for user '%s'", email)
 		} else {
@@ -380,6 +373,9 @@ func addCrewForJob(ctx context.Context, db *sql.DB, job Job) error {
 				RankID:     crew.CrewOnDuty.RankID,
 				IsMaster:   CustomBool("N"),
 				IsOnJob:    CustomBool("Y"),
+			}
+			if isMaster {
+				jc.IsMaster = CustomBool("Y")
 			}
 			columns := []column{}
 			o := reflect.ValueOf(crewOnJob{JobCrew: jc})
@@ -395,6 +391,24 @@ func addCrewForJob(ctx context.Context, db *sql.DB, job Job) error {
 				return errors.Wrapf(err, "insert member records for job %d user '%s'",
 					job.ID, email)
 			}
+		}
+		return nil
+	}
+	if job.ID == 0 {
+		if jobID, err := getJobID(ctx, db, job); err != nil {
+			return errors.Wrapf(err, "addCrewForJob ID not found and cannot be 0")
+		} else {
+			job.ID = jobID
+		}
+	}
+	for _, email := range job.VMRVessel.CrewList {
+		if err := addCrew(email, false); err != nil {
+			return errors.Wrapf(err, "addCrew for crew list")
+		}
+	}
+	if job.VMRVessel.Master != "" {
+		if err := addCrew(job.VMRVessel.Master, true); err != nil {
+			return errors.Wrapf(err, "addCrew for master")
 		}
 	}
 	return nil

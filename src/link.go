@@ -26,6 +26,7 @@ type VMRVessel struct {
 	StartHoursStbd IntString  `json:"activationsrvenginehours2start"`
 	EndHoursPort   IntString  `firebird:"JOBHOURSEND" json:"activationsrvenginehours1end"`
 	EndHoursStbd   IntString  `json:"activationsrvenginehours2end"`
+	Master         string     `json:"activationsrvmaster"`
 	CrewList       StringList `json:"activationsrvcrew"`
 }
 

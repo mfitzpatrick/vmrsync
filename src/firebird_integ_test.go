@@ -140,6 +140,27 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 		assert.Equal(t, 3, rank)
 		assert.False(t, rows.Next())
 	}
+
+	// Update the crew list
+	dbObj.Job.VMRVessel.Master = "marvin.the.martian@mrq.org.au"
+	jobID = 3
+	err = sendToDB(context.Background(), realDB, dbObj)
+	assert.Nil(t, err)
+	rows, err = realDB.QueryContext(context.Background(),
+		"SELECT CREWMEMBER,CREWRANKING,SKIPPER FROM DUTYJOBSCREW"+
+			" WHERE CREWJOBSEQUENCE=? AND SKIPPER=?", jobID, "Y")
+	if assert.Nil(t, err) {
+		defer rows.Close()
+		assert.True(t, rows.Next())
+		var memberID, rank int
+		var isMaster string
+		err = rows.Scan(&memberID, &rank, &isMaster)
+		assert.Nil(t, err)
+		assert.Equal(t, 2, memberID)
+		assert.Equal(t, 12, rank)
+		assert.Equal(t, "Y", isMaster)
+		assert.False(t, rows.Next())
+	}
 }
 
 func TestSendToDB_NewRecord(t *testing.T) {
