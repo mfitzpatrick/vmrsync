@@ -6,7 +6,7 @@ on:
       - v*
 
 env:
-  WIN64BIN: vmrsync-win64
+  WIN64BIN: vmrsync-win64.exe
   TAG: ${{ github.ref }}
 
 jobs:

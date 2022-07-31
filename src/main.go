@@ -37,8 +37,14 @@ func (e runError) Unwrap() error {
 	return e.error
 }
 
+var dbConnStr string
+
+func setDBConnString(host string, port int, pass string) {
+	dbConnStr = fmt.Sprintf("SYSDBA:%s@%s:%d", pass, host, port)
+}
+
 func openDB() (*sql.DB, error) {
-	return sql.Open("firebirdsql", "SYSDBA:vmrdbpass@localhost:3050/firebird/data/VMRMEMBERS.FDB")
+	return sql.Open("firebirdsql", fmt.Sprintf("%s/firebird/data/VMRMEMBERS.FDB", dbConnStr))
 }
 
 func openConfig() error {
@@ -70,15 +76,14 @@ func run(db *sql.DB) []error {
 }
 
 func main() {
-	if db, err := openDB(); err != nil {
+	if err := openConfig(); err != nil {
+		log.Fatalf("Config parsing failed: %v", err)
+	} else if db, err := openDB(); err != nil {
 		log.Fatalf("Unable to open DB: %v", err)
 	} else if err := db.Ping(); err != nil {
 		log.Fatalf("No connection to DB: %v", err)
 	} else {
 		defer db.Close()
-		if err := openConfig(); err != nil {
-			log.Fatalf("Config parsing failed: %v", err)
-		}
 
 		// Run an infinite loop reading data from TripWatch and synchronising it with the
 		// Firebird DB.

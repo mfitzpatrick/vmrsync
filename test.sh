@@ -96,6 +96,13 @@ fi
 if [ "$test_type" = "manual" ]; then
     if ! is_db_up ; then
         sh "$BASE/dbtest/start.sh"
+        user_init="$BASE/dbtest/user-init.sql"
+        if [ -f "$user_init" ]; then
+            docker cp "$user_init" dbtest_db_1:/setup/user-init.sql
+            docker-compose -f "$BASE/dbtest/docker-compose.yml" \
+                exec -T db /usr/local/firebird/bin/isql -u SYSDBA \
+                -i "/setup/user-init.sql"
+        fi
     fi
     cd "$BASE/src"
     go run .
