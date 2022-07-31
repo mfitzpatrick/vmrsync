@@ -13,6 +13,7 @@ import (
 )
 
 var matchFieldIsZero = errors.Errorf("Zero Key Value Error")
+var dbZeroRowsErr = errors.Errorf("No DB Rows Returned")
 
 type dbError struct {
 	error
@@ -308,11 +309,11 @@ func findRankingForMember(ctx context.Context, db *sql.DB, id int) (int, error) 
 	}
 }
 
-func pullMemberRecordsByEmail(ctx context.Context, db *sql.DB, email string) (crewInfo, error) {
+func pullMemberRecordsByEmail(ctx context.Context, db *sql.DB, dutyCrewID int, email string) (crewInfo, error) {
 	stmt := "SELECT M.MEMBERNOLOCAL,M.EMAIL2,C.DUTYSEQUENCE,C.CREWMEMBER,C.CREWRANKING" +
 		" FROM MEMBERS M INNER JOIN DUTYCREWS C ON M.MEMBERNOLOCAL=C.CREWMEMBER" +
-		" WHERE M.EMAIL2=?"
-	if rows, err := db.QueryContext(ctx, stmt, email); err != nil {
+		" WHERE M.EMAIL2=? AND C.DUTYSEQUENCE=?"
+	if rows, err := db.QueryContext(ctx, stmt, email, dutyCrewID); err != nil {
 		return crewInfo{}, errors.Wrapf(dbError{
 			error:     err,
 			name:      "MEMBERS & DUTYCREWS",
@@ -322,7 +323,11 @@ func pullMemberRecordsByEmail(ctx context.Context, db *sql.DB, email string) (cr
 		defer rows.Close()
 		crew := crewInfo{}
 
-		for rows.Next() {
+		if !rows.Next() {
+			return crewInfo{}, errors.Wrapf(dbZeroRowsErr,
+				"member records for duty log %d don't contain member %s",
+				dutyCrewID, email)
+		} else {
 			if err := rows.Scan(&crew.Member.ID, &crew.Member.Email2,
 				&crew.CrewOnDuty.ID, &crew.CrewOnDuty.MemberNo, &crew.CrewOnDuty.RankID,
 			); err != nil {
@@ -420,7 +425,7 @@ func getJobID(ctx context.Context, db *sql.DB, job Job) (int, error) {
 func addCrewForJob(ctx context.Context, db *sql.DB, job Job) error {
 	const TBL = "DUTYJOBSCREW"
 	addCrew := func(email string, isMaster bool) error {
-		if crew, err := pullMemberRecordsByEmail(ctx, db, email); err != nil {
+		if crew, err := pullMemberRecordsByEmail(ctx, db, job.DutyLogID, email); err != nil {
 			return errors.Wrapf(err, "member records for user '%s'", email)
 		} else {
 			jc := JobCrew{

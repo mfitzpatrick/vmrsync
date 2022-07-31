@@ -78,11 +78,11 @@ func TestFindRankingForMember(t *testing.T) {
 }
 
 func TestPullMemberRecordsByEmail(t *testing.T) {
-	member, err := pullMemberRecordsByEmail(context.Background(), realDB, "marvin.the.martian@mrq.org.au")
+	member, err := pullMemberRecordsByEmail(context.Background(), realDB, 2, "marvin.the.martian@mrq.org.au")
 	assert.Nil(t, err)
 	assert.Equal(t, 12, member.CrewOnDuty.RankID, "Record found %+v", member)
 
-	member, err = pullMemberRecordsByEmail(context.Background(), realDB, "bugs.bunny@mrq.org.au")
+	member, err = pullMemberRecordsByEmail(context.Background(), realDB, 2, "bugs.bunny@mrq.org.au")
 	assert.Nil(t, err)
 	assert.Equal(t, 3, member.CrewOnDuty.RankID, "Record found %+v", member)
 }
@@ -236,6 +236,15 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 	assert.Nil(t, err)
 	err = dbObj.Job.dbMatchesCrewList(context.Background(), realDB, jobID)
 	assert.Nil(t, err)
+
+	// Swap the designated master with a new member who is not added on this duty crew
+	dbObj.Job.VMRVessel.Master = "porky.pig@mrq.org.au"
+	err = sendToDB(context.Background(), realDB, dbObj)
+	if assert.NotNil(t, err) {
+		assert.True(t, errors.Is(err, dbZeroRowsErr))
+	}
+	err = dbObj.Job.dbMatchesCrewList(context.Background(), realDB, jobID)
+	assert.NotNil(t, err)
 }
 
 func TestSendToDB_NewRecord(t *testing.T) {
