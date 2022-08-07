@@ -244,16 +244,19 @@ func getLatestDutyLogEntry(ctx context.Context, db *sql.DB) (DutyLogTable, error
 		defer rows.Close()
 		entry := DutyLogTable{}
 		for rows.Next() {
+			var crewName sql.NullString
 			if err := rows.Scan(
 				&entry.DutyLog.ID,
 				&entry.DutyLog.Date,
-				&entry.DutyLog.CrewName,
+				&crewName,
 			); err != nil {
 				return DutyLogTable{}, errors.Wrapf(dbError{
 					error:     err,
 					name:      "DUTYLOG",
 					statement: stmt,
 				}, "latest duty log entry scanning table columns")
+			} else {
+				entry.DutyLog.CrewName = crewName.String
 			}
 		}
 		return entry, nil

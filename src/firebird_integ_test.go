@@ -63,6 +63,21 @@ func TestGetLatestDutyLogEntry(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 2, table.DutyLog.ID)
 	assert.Equal(t, "WHITE", strings.TrimSpace(table.DutyLog.CrewName))
+
+	// Add DB entry to this table with a NULL name to ensure that the reading is performed correctly,
+	// then delete the entry.
+	const SEQ = 13
+	_, err = realDB.ExecContext(context.Background(),
+		"INSERT INTO DUTYLOG (DUTYSEQUENCE,DUTYDATE,CREW,SKIPPER) VALUES (?,'2022-01-07',NULL,1)",
+		SEQ)
+	assert.Nil(t, err)
+	table, err = getLatestDutyLogEntry(context.Background(), realDB)
+	assert.Nil(t, err)
+	assert.Equal(t, SEQ, table.DutyLog.ID)
+	assert.Equal(t, "", strings.TrimSpace(table.DutyLog.CrewName))
+	_, err = realDB.ExecContext(context.Background(),
+		"DELETE FROM DUTYLOG WHERE DUTYSEQUENCE=?", SEQ)
+	assert.Nil(t, err)
 }
 
 func TestFindMemberForEmail(t *testing.T) {
