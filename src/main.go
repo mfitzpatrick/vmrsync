@@ -39,12 +39,12 @@ func (e runError) Unwrap() error {
 
 var dbConnStr string
 
-func setDBConnString(host string, port int, pass string) {
-	dbConnStr = fmt.Sprintf("SYSDBA:%s@%s:%d", pass, host, port)
+func setDBConnString(host string, port int, pass, path string) {
+	dbConnStr = fmt.Sprintf("SYSDBA:%s@%s:%d/%s", pass, host, port, path)
 }
 
 func openDB() (*sql.DB, error) {
-	return sql.Open("firebirdsql", fmt.Sprintf("%s/firebird/data/VMRMEMBERS.FDB", dbConnStr))
+	return sql.Open("firebirdsql", dbConnStr)
 }
 
 func openConfig() error {

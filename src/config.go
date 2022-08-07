@@ -19,6 +19,7 @@ func parseConfig(fname string) error {
 			Host     string `yaml:"host"`
 			Port     int    `yaml:"port"`
 			Password string `yaml:"password"`
+			Path     string `yaml:"path"`
 		} `yaml:"firebird"`
 	}{}
 	if file, err := os.Open(fname); err != nil {
@@ -36,7 +37,8 @@ func parseConfig(fname string) error {
 			} else {
 				tripwatchPollFrequency = freq
 			}
-			setDBConnString(cfg.Firebird.Host, cfg.Firebird.Port, cfg.Firebird.Password)
+			setDBConnString(cfg.Firebird.Host, cfg.Firebird.Port, cfg.Firebird.Password,
+				cfg.Firebird.Path)
 		}
 	}
 	return nil
