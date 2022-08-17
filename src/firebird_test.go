@@ -123,7 +123,7 @@ func TestAggregateFields(t *testing.T) {
 	err = aggregateFields(data)
 	assert.Nil(t, err)
 	assert.Equal(t, "SE", string(data.Job.Weather.WindDir))
-	assert.Equal(t, "10 - 20kt", string(data.Job.Weather.WindSpeed))
+	assert.Equal(t, "10 - 20 knots", string(data.Job.Weather.WindSpeed))
 	assert.Equal(t, "Clear", data.Job.Weather.RainState)
 
 	// Check GPS parsing

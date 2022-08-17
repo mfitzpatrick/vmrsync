@@ -40,11 +40,11 @@ func TestLengthEnumUnmarshal(t *testing.T) {
 	var l LengthEnum
 	err := (&l).UnmarshalJSON([]byte("5"))
 	assert.Nil(t, err)
-	assert.Equal(t, "0 - 8m", string(l))
+	assert.Equal(t, "4.5m - 8m", string(l))
 
 	err = (&l).UnmarshalJSON([]byte(" \"15"))
 	assert.Nil(t, err)
-	assert.Equal(t, "> 12m", string(l))
+	assert.Equal(t, "15m - 25m", string(l))
 
 	err = (&l).UnmarshalJSON([]byte("null"))
 	assert.Nil(t, err)
@@ -55,7 +55,7 @@ func TestWindSpeedEnumUnmarshal(t *testing.T) {
 	var w WindSpeedEnum
 	err := (&w).UnmarshalJSON([]byte("15"))
 	assert.Nil(t, err)
-	assert.Equal(t, "10 - 20kt", string(w))
+	assert.Equal(t, "10 - 20 knots", string(w))
 }
 
 func TestWindDirectionEnumUnmarshal(t *testing.T) {
@@ -101,4 +101,77 @@ func TestStringListUnmarshal(t *testing.T) {
 	err = (&s).UnmarshalJSON([]byte(` "[\"s1\", \"s2\"]" `))
 	assert.Nil(t, err)
 	assert.Equal(t, []string{"s1", "s2"}, []string(s))
+}
+
+func TestJobType(t *testing.T) {
+	var j JobType
+	err := (&j).UnmarshalJSON([]byte(`"Assist"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Breakdown", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"SAR"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Search", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"Training"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Training/Patrol", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"Other type"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Other type", string(j))
+}
+
+func TestJobAction(t *testing.T) {
+	var j JobAction
+	err := (&j).UnmarshalJSON([]byte(`"Tow"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Tow", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"go tOWards the light"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Tow", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"search for boat with cops"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Search & Rescue", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"ungrounding of boat"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Ungrounded", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"Miscellaneous"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Other", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"medical emergency"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Medivac", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"Broadwater Training"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Training", string(j))
+}
+
+func TestWaterLimitsEnum(t *testing.T) {
+	var w WaterLimitsEnum
+	err := (&w).UnmarshalJSON([]byte(`"E"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Smooth", string(w))
+
+	err = (&w).UnmarshalJSON([]byte(`"D"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Partially Smooth", string(w))
+
+	err = (&w).UnmarshalJSON([]byte(`"C"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Open", string(w))
+
+	err = (&w).UnmarshalJSON([]byte(`"B"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Open", string(w))
+
+	err = (&w).UnmarshalJSON([]byte(`"A"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Open", string(w))
 }

@@ -72,19 +72,19 @@ type Weather struct {
 }
 
 type Job struct {
-	DutyLogID   int            `firebird:"JOBDUTYSEQUENCE"`
-	ID          int            `firebird:"JOBJOBSEQUENCE,id"`
-	StartTime   CustomJSONTime `firebird:"JOBTIMEOUT,match" json:"activationsrvdeparttime"`
-	EndTime     CustomJSONTime `firebird:"JOBTIMEIN" json:"activationsrvreturntime"`
-	Type        string         `firebird:"JOBTYPE" len:"20" json:"activationstype"`
-	Action      string         `firebird:"JOBACTIONTAKEN" len:"20" json:"activationsdvactionrequested"`
-	Purpose     string         `json:"activationspurpose"`
-	Comments    string         `firebird:"JOBDETAILS" len:"96" json:"activationscomments"`
-	Donation    IntString      `firebird:"JOBDONATION" json:"activationsdonationreceived"`
-	Frequency   string         `firebird:"JOBFREQUENCY" len:"30"`
-	WaterLimits string         `firebird:"JOBWATERLIMITS" len:"20" json:"activationsoperationsareaclassification"`
-	SeaState    SeaStateEnum   `firebird:"JOBSEAS" len:"20" json:"activationsobservedseastate"`
-	Commercial  CustomBool     `firebird:"JOBCOMMERCIALVESSEL" len:"1"`
+	DutyLogID   int             `firebird:"JOBDUTYSEQUENCE"`
+	ID          int             `firebird:"JOBJOBSEQUENCE,id"`
+	StartTime   CustomJSONTime  `firebird:"JOBTIMEOUT,match" json:"activationsrvdeparttime"`
+	EndTime     CustomJSONTime  `firebird:"JOBTIMEIN" json:"activationsrvreturntime"`
+	Type        JobType         `firebird:"JOBTYPE" len:"20" json:"activationstype"`
+	Action      JobAction       `firebird:"JOBACTIONTAKEN" len:"20" json:"activationsdvactionrequested"`
+	Purpose     string          `firebird:"JOBDETAILS" len:"96" json:"activationspurpose"`
+	Comments    string          `firebird:"JOBDETAILS_LONG" len:"500" json:"activationscomments"`
+	Donation    IntString       `firebird:"JOBDONATION" json:"activationsdonationreceived"`
+	Frequency   string          `firebird:"JOBFREQUENCY" len:"30"`
+	WaterLimits WaterLimitsEnum `firebird:"JOBWATERLIMITS" len:"20" json:"activationsoperationsareaclassification"`
+	SeaState    SeaStateEnum    `firebird:"JOBSEAS" len:"20" json:"activationsobservedseastate"`
+	Commercial  CustomBool      `firebird:"JOBCOMMERCIALVESSEL" len:"1"`
 	VMRVessel
 	AssistedVessel
 	Emergency
@@ -242,12 +242,18 @@ func (l *LengthEnum) UnmarshalJSON(bytes []byte) error {
 		// Set length in metres to a string enum representing the range it lies in
 		lenRange := ""
 		switch length := val; {
+		case length < 4.5:
+			lenRange = "<4.5m"
 		case length < 8:
-			lenRange = "0 - 8m"
-		case length < 12:
-			lenRange = "8 - 12m"
+			lenRange = "4.5m - 8m"
+		case length < 10:
+			lenRange = "8m - 10m"
+		case length < 15:
+			lenRange = "10m - 15m"
+		case length < 25:
+			lenRange = "15m - 25m"
 		default:
-			lenRange = "> 12m"
+			lenRange = "25m +"
 		}
 		*l = LengthEnum(lenRange)
 	}
@@ -269,11 +275,11 @@ func (w *WindSpeedEnum) UnmarshalJSON(bytes []byte) error {
 func (w *WindSpeedEnum) Set(knots int) {
 	switch speed := knots; {
 	case speed < 10:
-		*w = WindSpeedEnum("0 - 10kt")
+		*w = WindSpeedEnum("0 - 10 knots")
 	case speed <= 20:
-		*w = WindSpeedEnum("10 - 20kt")
+		*w = WindSpeedEnum("10 - 20 knots")
 	default:
-		*w = WindSpeedEnum("> 20kt")
+		*w = WindSpeedEnum("20+ knots")
 	}
 }
 
@@ -358,4 +364,85 @@ func (s StringList) Has(email string) bool {
 		}
 	}
 	return false
+}
+
+type JobType string
+
+func (j *JobType) UnmarshalJSON(bytes []byte) error {
+	var jt string
+	if err := json.Unmarshal(bytes, &jt); err != nil {
+		return errors.Wrapf(err, "JobType parse JSON '%s'", string(bytes))
+	} else {
+		switch jt {
+		case "Medivac":
+			*j = JobType("Medical")
+		case "SAR":
+			*j = JobType("Search")
+		case "Assist":
+			*j = JobType("Breakdown")
+		case "Training":
+			*j = JobType("Training/Patrol")
+		case "Scattering of Ashes":
+			*j = JobType("Dispersal")
+		default:
+			*j = JobType(jt)
+		}
+		return nil
+	}
+}
+
+type JobAction string
+
+func (j *JobAction) UnmarshalJSON(bytes []byte) error {
+	var ja string
+	if err := json.Unmarshal(bytes, &ja); err != nil {
+		return errors.Wrapf(err, "JobAction parse JSON '%s'", string(bytes))
+	} else {
+		lja := strings.ToLower(ja)
+		switch {
+		case strings.Contains(lja, "jump"):
+			*j = JobAction("Jump Start")
+		case strings.Contains(lja, "medivac"),
+			strings.Contains(lja, "medevac"),
+			strings.Contains(lja, "medical"):
+			*j = JobAction("Medivac")
+		case strings.Contains(lja, "nil"):
+			*j = JobAction("Nil")
+		case strings.Contains(lja, "pump"):
+			*j = JobAction("Pump Out")
+		case strings.Contains(lja, "search"),
+			strings.Contains(lja, "sar"):
+			*j = JobAction("Search & Rescue")
+		case strings.Contains(lja, "fuel"):
+			*j = JobAction("Supplied Fuel")
+		case strings.Contains(lja, "tow"):
+			*j = JobAction("Tow")
+		case strings.Contains(lja, "train"):
+			*j = JobAction("Training")
+		case strings.Contains(lja, "unground"):
+			*j = JobAction("Ungrounded")
+		default:
+			*j = JobAction("Other")
+		}
+		return nil
+	}
+}
+
+type WaterLimitsEnum string
+
+func (w *WaterLimitsEnum) UnmarshalJSON(bytes []byte) error {
+	var wl string
+	if err := json.Unmarshal(bytes, &wl); err != nil {
+		return errors.Wrapf(err, "WaterLimitsEnum parse JSON '%s'", string(bytes))
+	} else {
+		switch wl {
+		case "A", "B", "C":
+			*w = WaterLimitsEnum("Open")
+		case "D":
+			*w = WaterLimitsEnum("Partially Smooth")
+		case "E":
+			*w = WaterLimitsEnum("Smooth")
+		}
+		return nil
+	}
 }
