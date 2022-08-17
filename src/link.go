@@ -74,6 +74,7 @@ type Weather struct {
 type Job struct {
 	DutyLogID   int             `firebird:"JOBDUTYSEQUENCE"`
 	ID          int             `firebird:"JOBJOBSEQUENCE,id"`
+	Status      string          `json:"activationsstatus"`
 	StartTime   CustomJSONTime  `firebird:"JOBTIMEOUT,match" json:"activationsrvdeparttime"`
 	EndTime     CustomJSONTime  `firebird:"JOBTIMEIN" json:"activationsrvreturntime"`
 	Type        JobType         `firebird:"JOBTYPE" len:"20" json:"activationstype"`

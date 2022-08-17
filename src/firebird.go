@@ -635,11 +635,9 @@ func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
 	}
 
 	// Map this to an existing DutyLog table entry
-	// dutyLog := DutyLogTable{}
 	if dl, err := getLatestDutyLogEntry(ctx, db); err != nil {
 		return errors.Wrapf(err, "sendToDB failed to get duty log entry")
 	} else {
-		// dutyLog = dl
 		data.Job.DutyLogID = dl.DutyLog.ID
 	}
 

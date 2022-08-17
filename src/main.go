@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	_ "github.com/nakagami/firebirdsql"
@@ -64,7 +65,10 @@ func run(db *sql.DB) []error {
 		errlist = append(errlist, errors.Wrapf(err, "List TripWatch activations"))
 	} else {
 		for i, _ := range activations {
-			if err := sendToDB(ctx, db, &activations[i]); err != nil {
+			if strings.ToLower(activations[i].Job.Status) == "cancelled" {
+				// Don't synchronise cancelled activations. Skip over them.
+				continue
+			} else if err := sendToDB(ctx, db, &activations[i]); err != nil {
 				errlist = append(errlist, runError{
 					error:      errors.Wrapf(err, "DB update"),
 					activation: &activations[i],
