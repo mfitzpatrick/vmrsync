@@ -345,11 +345,13 @@ func TestSendToDB_NewRecord(t *testing.T) {
 	dbObj = &linkActivationDB{
 		ID: 22,
 		Job: Job{
-			StartTime:   CustomJSONTime(getTimeFromAEST(t, "2022-01-16T06:09:32+10:00")),
-			EndTime:     CustomJSONTime(getTimeFromAEST(t, "2022-01-16T08:00:00+10:00")),
-			Type:        "Assist",
-			Action:      "Towing",
-			Comments:    "This is the comments field.",
+			StartTime: CustomJSONTime(getTimeFromAEST(t, "2022-01-16T06:09:32+10:00")),
+			EndTime:   CustomJSONTime(getTimeFromAEST(t, "2022-01-16T08:00:00+10:00")),
+			Type:      "Assist",
+			Action:    "Towing",
+			Purpose:   "The purpose field contains a short description of the task",
+			Comments: "This is the comments field. This field is a large blob field that" +
+				" contains multi-line data to be stored in the DB.",
 			Donation:    IntString(200),
 			WaterLimits: "E",
 			SeaState:    "Calm",
@@ -388,17 +390,22 @@ func TestSendToDB_NewRecord(t *testing.T) {
 
 	// Check that data in DB was updated correctly
 	rows, err = realDB.QueryContext(context.Background(),
-		"SELECT JOBJOBSEQUENCE,JOBSEAS FROM DUTYJOBS"+
+		"SELECT JOBJOBSEQUENCE,JOBSEAS,JOBDETAILS_LONG FROM DUTYJOBS"+
 			" WHERE JOBTIMEOUT='2022-01-16 06:09:32' AND JOBDUTYVESSELNAME='Marine Rescue 2'")
 	if assert.Nil(t, err) {
 		defer rows.Close()
 		assert.True(t, rows.Next())
 		var seq int
 		var seastate string
-		err = rows.Scan(&seq, &seastate)
+		var longdesc string
+		err = rows.Scan(&seq, &seastate, &longdesc)
 		assert.Nil(t, err)
 		assert.Equal(t, "Calm", strings.TrimSpace(seastate))
 		assert.Equal(t, MAX_PRELOADED_SEQUENCE+3, seq)
+		assert.Equal(t,
+			"This is the comments field. This field is a large blob field that"+
+				" contains multi-line data to be stored in the DB.",
+			strings.TrimSpace(longdesc))
 		assert.False(t, rows.Next())
 	}
 }
