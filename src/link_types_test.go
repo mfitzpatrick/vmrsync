@@ -175,3 +175,22 @@ func TestWaterLimitsEnum(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "Open", string(w))
 }
+
+func TestVMRVesselNameEnum(t *testing.T) {
+	var n VMRVesselNameEnum
+	err := (&n).UnmarshalJSON([]byte(`"MARINERESCUE1"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Marine Rescue 1", string(n))
+
+	err = (&n).UnmarshalJSON([]byte(`"MARINERESCUE2"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Marine Rescue 2", string(n))
+
+	err = (&n).UnmarshalJSON([]byte(`"MARINERESCUE4"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Marine Rescue 4", string(n))
+
+	err = (&n).UnmarshalJSON([]byte(`"MARINERESCUE5"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Marine Rescue 5", string(n))
+}

@@ -41,8 +41,8 @@ func TestIntegTripwatchListActivations(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 2, len(list))
 	assert.Equal(t, 86239, list[0].ID)
-	assert.Equal(t, "MARINERESCUE1", list[0].Job.VMRVessel.Name)
+	assert.Equal(t, "Marine Rescue 1", string(list[0].Job.VMRVessel.Name))
 	assert.Equal(t, 86297, list[1].ID)
-	assert.Equal(t, "MARINERESCUE2", list[1].Job.VMRVessel.Name)
+	assert.Equal(t, "Marine Rescue 2", string(list[1].Job.VMRVessel.Name))
 	assert.Equal(t, getTime(t, "2022-05-27T00:58:00Z"), time.Time(list[1].Job.StartTime))
 }

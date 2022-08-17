@@ -26,7 +26,7 @@ func TestNestedStructJSONUnmarshal(t *testing.T) {
 		Updated: CustomJSONTime(getTime(t, "2022-03-12T12:50:15.000000Z")),
 		Job: Job{
 			VMRVessel: VMRVessel{
-				Name: "MARINERESCUE1",
+				Name: "Marine Rescue 1",
 			},
 			StartTime: CustomJSONTime(getTime(t, "2022-03-12T12:35:00.000000Z")),
 		},

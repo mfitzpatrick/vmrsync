@@ -20,14 +20,14 @@ import (
  */
 
 type VMRVessel struct {
-	ID             int        `firebird:"JOBDUTYVESSELNO" json:"activationsrvsequence"`
-	Name           string     `firebird:"JOBDUTYVESSELNAME,match" len:"30" json:"activationsrvvessel"`
-	StartHoursPort IntString  `firebird:"JOBHOURSSTART" json:"activationsrvenginehours1start"`
-	StartHoursStbd IntString  `json:"activationsrvenginehours2start"`
-	EndHoursPort   IntString  `firebird:"JOBHOURSEND" json:"activationsrvenginehours1end"`
-	EndHoursStbd   IntString  `json:"activationsrvenginehours2end"`
-	Master         string     `json:"activationsrvmaster"`
-	CrewList       StringList `json:"activationsrvcrew"`
+	ID             int               `firebird:"JOBDUTYVESSELNO" json:"activationsrvsequence"`
+	Name           VMRVesselNameEnum `firebird:"JOBDUTYVESSELNAME,match" len:"30" json:"activationsrvvessel"`
+	StartHoursPort IntString         `firebird:"JOBHOURSSTART" json:"activationsrvenginehours1start"`
+	StartHoursStbd IntString         `json:"activationsrvenginehours2start"`
+	EndHoursPort   IntString         `firebird:"JOBHOURSEND" json:"activationsrvenginehours1end"`
+	EndHoursStbd   IntString         `json:"activationsrvenginehours2end"`
+	Master         string            `json:"activationsrvmaster"`
+	CrewList       StringList        `json:"activationsrvcrew"`
 }
 
 type AssistedVessel struct {
@@ -442,6 +442,27 @@ func (w *WaterLimitsEnum) UnmarshalJSON(bytes []byte) error {
 			*w = WaterLimitsEnum("Partially Smooth")
 		case "E":
 			*w = WaterLimitsEnum("Smooth")
+		}
+		return nil
+	}
+}
+
+type VMRVesselNameEnum string
+
+func (n *VMRVesselNameEnum) UnmarshalJSON(bytes []byte) error {
+	var vn string
+	if err := json.Unmarshal(bytes, &vn); err != nil {
+		return errors.Wrapf(err, "VMRVesselNameEnum parse JSON '%s'", string(bytes))
+	} else {
+		switch vn {
+		case "MARINERESCUE1":
+			*n = VMRVesselNameEnum("Marine Rescue 1")
+		case "MARINERESCUE2":
+			*n = VMRVesselNameEnum("Marine Rescue 2")
+		case "MARINERESCUE4":
+			*n = VMRVesselNameEnum("Marine Rescue 4")
+		case "MARINERESCUE5":
+			*n = VMRVesselNameEnum("Marine Rescue 5")
 		}
 		return nil
 	}

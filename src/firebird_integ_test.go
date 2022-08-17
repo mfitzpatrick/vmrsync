@@ -302,7 +302,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 			SeaState:  "rough",
 			VMRVessel: VMRVessel{
 				ID:   2,
-				Name: "MARINERESCUE2",
+				Name: "Marine Rescue 2",
 				CrewList: StringList{
 					"bugs.bunny@mrq.org.au",
 				},
@@ -315,7 +315,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 	// Check that data in DB was updated correctly
 	rows, err = realDB.QueryContext(context.Background(),
 		"SELECT JOBDUTYSEQUENCE,JOBJOBSEQUENCE,JOBSEAS FROM DUTYJOBS"+
-			" WHERE JOBTIMEOUT='2022-02-12 16:01:56' AND JOBDUTYVESSELNAME='MARINERESCUE2'")
+			" WHERE JOBTIMEOUT='2022-02-12 16:01:56' AND JOBDUTYVESSELNAME='Marine Rescue 2'")
 	if assert.Nil(t, err) {
 		defer rows.Close()
 		assert.True(t, rows.Next())
@@ -348,13 +348,14 @@ func TestSendToDB_NewRecord(t *testing.T) {
 			StartTime:   CustomJSONTime(getTimeUTC(t, "2022-01-16T06:09:32Z")),
 			EndTime:     CustomJSONTime(getTimeUTC(t, "2022-01-16T08:00:00Z")),
 			Type:        "Assist",
-			Action:      "Tow, refloat, medical assist",
+			Action:      "Towing",
 			Comments:    "This is the comments field.",
 			Donation:    IntString(200),
 			WaterLimits: "E",
 			SeaState:    "Calm",
 			AssistedVessel: AssistedVessel{
-				Rego:       "AB123Q",
+				// Long rego to test string truncation
+				Rego:       "AB123Queensland Which Is The Best",
 				Name:       "Dummy II",
 				Length:     LengthEnum("0-8m"),
 				Type:       "Party Pontoon",
@@ -371,7 +372,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 			},
 			VMRVessel: VMRVessel{
 				ID:             2,
-				Name:           "MARINERESCUE2",
+				Name:           "Marine Rescue 2",
 				StartHoursPort: IntString(56),
 				EndHoursPort:   IntString(58),
 			},
@@ -388,7 +389,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 	// Check that data in DB was updated correctly
 	rows, err = realDB.QueryContext(context.Background(),
 		"SELECT JOBJOBSEQUENCE,JOBSEAS FROM DUTYJOBS"+
-			" WHERE JOBTIMEOUT='2022-01-16 06:09:32' AND JOBDUTYVESSELNAME='MARINERESCUE2'")
+			" WHERE JOBTIMEOUT='2022-01-16 06:09:32' AND JOBDUTYVESSELNAME='Marine Rescue 2'")
 	if assert.Nil(t, err) {
 		defer rows.Close()
 		assert.True(t, rows.Next())
