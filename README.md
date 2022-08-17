@@ -27,7 +27,7 @@ As a means of testing the link to the Firebird DB, an example of the database (w
 invented data) is available in the `dbtest` subdirectory. The database will be run
 in a docker container. To start it and configure it with initial data:
 ```
-bash dbtest/start.sh
+bash dbtest/start.sh test
 ```
 The DB will then be accessible to port 3050 on localhost.
 

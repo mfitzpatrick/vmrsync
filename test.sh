@@ -4,7 +4,7 @@ BASE="$(cd $(dirname $0); pwd)"
 MANUALDB=${MANUALDB:-""}
 
 test_type=$1; shift
-allowed_types="clean unit integration manual inspect"
+allowed_types="clean unit integration manual inspect mrqemail"
 
 usage() {
     cat << EOF
@@ -23,6 +23,8 @@ manual: Starts a docker image for the DB (if one isn't currently running) and ru
     the DB instance with 'clean'.
 inspect: If a DB container is running, connect to the DB container with an SQL terminal
     for manually inspecting the DB state.
+mrqemail: Run the program to generate MRQ email addresses for each given member found
+    without an MRQ email address.
 clean: Cleans up any dangling services (like a DB service started by 'manual').
 
 EOF
@@ -79,7 +81,7 @@ if [ "$test_type" = "integration" ]; then
         echo "Go test build failure: $test_result"
         exit 1
     fi
-    sh "$BASE/dbtest/start.sh"
+    sh "$BASE/dbtest/start.sh" "test"
     docker-compose -f "$BASE/tripwatch-test/docker-compose.yml" up -d
     CONFIG_FILE="$BASE/tripwatch-test/test-config.yml" "$BASE/testbin"
     test_result=$?
@@ -95,7 +97,7 @@ fi
 
 if [ "$test_type" = "manual" ]; then
     if ! is_db_up ; then
-        sh "$BASE/dbtest/start.sh"
+        sh "$BASE/dbtest/start.sh" "test"
         user_init="$BASE/dbtest/user-init.sql"
         if [ -f "$user_init" ]; then
             docker cp "$user_init" dbtest_db_1:/setup/user-init.sql
@@ -110,5 +112,10 @@ fi
 
 if [ "$test_type" = "inspect" ]; then
     inspect_db
+fi
+
+if [ "$test_type" = "mrqemail" ]; then
+    cd "$BASE/newemail"
+    CONFIG_FILE="$BASE/tripwatch-test/test-config.yml" go run .
 fi
 
