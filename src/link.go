@@ -172,8 +172,10 @@ func (tm CustomJSONTime) String() string {
 	return time.Time(tm).String()
 }
 
+// Convert the time object to the UTC+10 timezone before writing it to the DB.
 func (tm CustomJSONTime) Value() (driver.Value, error) {
-	return time.Time(tm), nil
+	tz := time.FixedZone("UTC+10", 10*60*60)
+	return time.Time(tm).In(tz), nil
 }
 
 type CustomBool string //TripWatch boolean contained as a string or normal bool

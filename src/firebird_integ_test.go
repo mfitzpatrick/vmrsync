@@ -169,7 +169,7 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 	dbObj := &linkActivationDB{
 		ID: 42,
 		Job: Job{
-			StartTime: CustomJSONTime(getTimeUTC(t, "2022-01-01T06:00:35Z")),
+			StartTime: CustomJSONTime(getTimeFromAEST(t, "2022-01-01T06:00:35+10:00")),
 			SeaState:  "calm",
 			VMRVessel: VMRVessel{
 				ID:   2,
@@ -203,7 +203,7 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 	dbObj = &linkActivationDB{
 		ID: 88,
 		Job: Job{
-			StartTime: CustomJSONTime(getTimeUTC(t, "2022-01-01T13:10:00Z")),
+			StartTime: CustomJSONTime(getTimeFromAEST(t, "2022-01-01T13:10:00+10:00")),
 			VMRVessel: VMRVessel{
 				ID:   4,
 				Name: "MR5",
@@ -266,7 +266,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 	dbObj := &linkActivationDB{
 		ID: 482,
 		Job: Job{
-			StartTime: CustomJSONTime(getTimeUTC(t, "2022-02-07T13:50:12Z")),
+			StartTime: CustomJSONTime(getTimeFromAEST(t, "2022-02-07T13:50:12+10:00")),
 			SeaState:  "moderate",
 			VMRVessel: VMRVessel{
 				ID:   3,
@@ -298,7 +298,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 	dbObj = &linkActivationDB{
 		ID: 882,
 		Job: Job{
-			StartTime: CustomJSONTime(getTimeUTC(t, "2022-02-12T16:01:56Z")),
+			StartTime: CustomJSONTime(getTimeFromAEST(t, "2022-02-12T16:01:56+10:00")),
 			SeaState:  "rough",
 			VMRVessel: VMRVessel{
 				ID:   2,
@@ -345,8 +345,8 @@ func TestSendToDB_NewRecord(t *testing.T) {
 	dbObj = &linkActivationDB{
 		ID: 22,
 		Job: Job{
-			StartTime:   CustomJSONTime(getTimeUTC(t, "2022-01-16T06:09:32Z")),
-			EndTime:     CustomJSONTime(getTimeUTC(t, "2022-01-16T08:00:00Z")),
+			StartTime:   CustomJSONTime(getTimeFromAEST(t, "2022-01-16T06:09:32+10:00")),
+			EndTime:     CustomJSONTime(getTimeFromAEST(t, "2022-01-16T08:00:00+10:00")),
 			Type:        "Assist",
 			Action:      "Towing",
 			Comments:    "This is the comments field.",

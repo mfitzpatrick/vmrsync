@@ -2,9 +2,22 @@ package main
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestCustomJSONTime(t *testing.T) {
+	var v CustomJSONTime
+	err := (&v).UnmarshalJSON([]byte(`"2020-01-01T03:15:00Z"`))
+	assert.Nil(t, err)
+	assert.Equal(t, getTime(t, "2020-01-01T03:15:00Z"), time.Time(v))
+
+	// Parse non-standard timestamp
+	err = (&v).UnmarshalJSON([]byte(`"2020-01-01 03:15:00"`))
+	assert.Nil(t, err)
+	assert.Equal(t, getTime(t, "2020-01-01T03:15:00Z"), time.Time(v))
+}
 
 func TestCustomBoolUnmarshal(t *testing.T) {
 	var b CustomBool
