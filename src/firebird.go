@@ -428,7 +428,12 @@ func getJobID(ctx context.Context, db *sql.DB, job Job) (int, error) {
 func addCrewForJob(ctx context.Context, db *sql.DB, job Job) error {
 	const TBL = "DUTYJOBSCREW"
 	addCrew := func(email string, isMaster bool) error {
-		if crew, err := pullMemberRecordsByEmail(ctx, db, job.DutyLogID, email); err != nil {
+		if crew, err := pullMemberRecordsByEmail(ctx, db, job.DutyLogID, email); err != nil &&
+			errors.Is(err, dbZeroRowsErr) {
+			// No row found, but this isn't considered an error so just return nil with no action.
+			// We will silently ignore cases where the TripWatch member doesn't exist in Firebird.
+			return nil
+		} else if err != nil {
 			return errors.Wrapf(err, "member records for user '%s'", email)
 		} else {
 			jc := JobCrew{

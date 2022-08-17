@@ -255,9 +255,8 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 	// Swap the designated master with a new member who is not added on this duty crew
 	dbObj.Job.VMRVessel.Master = "porky.pig@mrq.org.au"
 	err = sendToDB(context.Background(), realDB, dbObj)
-	if assert.NotNil(t, err) {
-		assert.True(t, errors.Is(err, dbZeroRowsErr))
-	}
+	// Missing crew member is ignored & crew list doesn't match
+	assert.Nil(t, err)
 	err = dbObj.Job.dbMatchesCrewList(context.Background(), realDB, jobID)
 	assert.NotNil(t, err)
 }
