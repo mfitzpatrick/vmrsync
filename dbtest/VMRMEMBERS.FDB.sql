@@ -543,6 +543,7 @@ CREATE TABLE MEMBERS (
   PHONE_CALLOUT                 CHAR(20),
   EMAIL1                        CHAR(96),
   EMAIL2                        CHAR(96),
+  EMAILMRQ                      CHAR(96),
   VSHEET                        CHAR,
   CURRENTCREW                   CHAR(10),
   CURRENTCREWDATE               DATE,

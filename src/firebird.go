@@ -264,7 +264,7 @@ func getLatestDutyLogEntry(ctx context.Context, db *sql.DB) (DutyLogTable, error
 }
 
 func findMemberForEmail(ctx context.Context, db *sql.DB, email string) (Member, error) {
-	stmt := "SELECT MEMBERNOLOCAL FROM MEMBERS WHERE EMAIL2=?"
+	stmt := "SELECT MEMBERNOLOCAL FROM MEMBERS WHERE LOWER(EMAILMRQ)=?"
 	if rows, err := db.QueryContext(ctx, stmt, email); err != nil {
 		return Member{}, errors.Wrapf(dbError{
 			error:     err,
@@ -313,9 +313,9 @@ func findRankingForMember(ctx context.Context, db *sql.DB, id int) (int, error) 
 }
 
 func pullMemberRecordsByEmail(ctx context.Context, db *sql.DB, dutyCrewID int, email string) (crewInfo, error) {
-	stmt := "SELECT M.MEMBERNOLOCAL,M.EMAIL2,C.DUTYSEQUENCE,C.CREWMEMBER,C.CREWRANKING" +
+	stmt := "SELECT M.MEMBERNOLOCAL,M.EMAILMRQ,C.DUTYSEQUENCE,C.CREWMEMBER,C.CREWRANKING" +
 		" FROM MEMBERS M INNER JOIN DUTYCREWS C ON M.MEMBERNOLOCAL=C.CREWMEMBER" +
-		" WHERE M.EMAIL2=? AND C.DUTYSEQUENCE=?"
+		" WHERE LOWER(M.EMAILMRQ)=? AND C.DUTYSEQUENCE=?"
 	if rows, err := db.QueryContext(ctx, stmt, email, dutyCrewID); err != nil {
 		return crewInfo{}, errors.Wrapf(dbError{
 			error:     err,
@@ -349,7 +349,7 @@ func pullMemberRecordsByEmail(ctx context.Context, db *sql.DB, dutyCrewID int, e
 
 func pullMembersOnJob(ctx context.Context, db *sql.DB, jobID int) ([]JobCrew, error) {
 	if rows, err := db.QueryContext(ctx,
-		"SELECT CREWDUTYSEQUENCE,CREWJOBSEQUENCE,CREWMEMBER,CREWRANKING,SKIPPER,EMAIL2 FROM DUTYJOBSCREW"+
+		"SELECT CREWDUTYSEQUENCE,CREWJOBSEQUENCE,CREWMEMBER,CREWRANKING,SKIPPER,EMAILMRQ FROM DUTYJOBSCREW"+
 			" INNER JOIN MEMBERS ON CREWMEMBER=MEMBERNOLOCAL"+
 			" WHERE CREWJOBSEQUENCE=?", jobID); err != nil {
 		return []JobCrew{}, errors.Wrapf(err, "pullMembersOnJob for job ID %d", jobID)
