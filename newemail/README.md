@@ -28,4 +28,15 @@ whatever reason. This program can be used to do this via command line arguments:
 ```
 gen_mrqemails.exe -email="newemail@mrq.org.au" -id=90701
 ```
+NB: yes, the single `-` before the argument name is correct.
+
+### Manually Finding Similar Emails
+In order to be able to update a given email address, we must first know the user and
+their associated ID. We can do some searching to find this information using this
+program:
+```
+gen_mrqemails.exe -email="newemail%"
+```
+This will find all user records which have an email address containing the substring
+in the email field.
 

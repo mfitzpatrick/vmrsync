@@ -100,10 +100,35 @@ func updateSingleEmail(db *sql.DB, userID int, email string) error {
 		"UPDATE MEMBERS SET EMAILMRQ=? WHERE MEMBERNOLOCAL=?",
 		email, userID,
 	); err != nil {
-		return errors.Wrapf(err, "update single email for user %d to %s failed: %v",
-			userID, email, err)
+		return errors.Wrapf(err, "update single email")
 	}
 
+	return nil
+}
+
+func listByPartialEmail(db *sql.DB, email string) error {
+	if rows, err := db.QueryContext(context.Background(),
+		"SELECT MEMBERNOLOCAL,FIRSTNAME,SURNAME,EMAILMRQ FROM MEMBERS WHERE EMAILMRQ LIKE ?",
+		email,
+	); err != nil {
+		return errors.Wrapf(err, "list email records like '%s'")
+	} else {
+		defer rows.Close()
+
+		log.Printf("ID, First Name, Last Name, MRQ Email")
+		for rows.Next() {
+			var id int
+			var first, last, email sql.NullString
+			if err := rows.Scan(&id, &first, &last, &email); err != nil {
+				return errors.Wrapf(err, "list by partial email '%s' row scan")
+			} else {
+				log.Printf("%d, %s, %s, %s",
+					id, strings.TrimSpace(first.String),
+					strings.TrimSpace(last.String),
+					strings.TrimSpace(email.String))
+			}
+		}
+	}
 	return nil
 }
 
@@ -121,10 +146,19 @@ func main() {
 	} else {
 		defer db.Close()
 
-		if argEmail != nil && *argEmail != "" && argUserID != nil && *argUserID != 0 {
-			if err := updateSingleEmail(db, *argUserID, *argEmail); err != nil {
-				log.Printf("updating single email for user %d to %s: %v",
-					*argUserID, *argEmail, err)
+		if argEmail != nil && *argEmail != "" {
+			if argUserID != nil && *argUserID != 0 {
+				// Both email and ID - we want to update the address.
+				if err := updateSingleEmail(db, *argUserID, *argEmail); err != nil {
+					log.Printf("updating single email for user %d to %s: %v",
+						*argUserID, *argEmail, err)
+				}
+			} else {
+				// Only email - we want to list all accounts with an email address like that
+				if err := listByPartialEmail(db, *argEmail); err != nil {
+					log.Printf("listing by partial email '%s' failed: %v",
+						*argEmail, err)
+				}
 			}
 		} else if err := autoGenerateMRQEmails(db); err != nil {
 			log.Printf("auto-generating all emails: %v", err)
