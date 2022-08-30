@@ -108,7 +108,8 @@ func updateSingleEmail(db *sql.DB, userID int, email string) error {
 
 func listByPartialEmail(db *sql.DB, email string) error {
 	if rows, err := db.QueryContext(context.Background(),
-		"SELECT MEMBERNOLOCAL,FIRSTNAME,SURNAME,EMAILMRQ FROM MEMBERS WHERE EMAILMRQ LIKE ?",
+		"SELECT MEMBERNOLOCAL,FIRSTNAME,SURNAME,EMAILMRQ FROM MEMBERS"+
+			" WHERE CURRENTCREW IS NOT NULL AND EMAILMRQ LIKE ?",
 		email,
 	); err != nil {
 		return errors.Wrapf(err, "list email records like '%s'")

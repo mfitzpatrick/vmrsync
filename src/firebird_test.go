@@ -75,14 +75,14 @@ func TestAggregateFields(t *testing.T) {
 	data := &linkActivationDB{
 		Job: Job{
 			Emergency: Emergency{
-				Notified: "t",
+				Notified: "Y",
 			},
 		},
 	}
 	err := aggregateFields(data)
 	assert.Nil(t, err)
-	assert.Equal(t, "t", string(data.Job.Emergency.Emergency))
-	assert.Equal(t, "f", string(data.Job.Commercial))
+	assert.Equal(t, "Y", string(data.Job.Emergency.Emergency))
+	assert.Equal(t, "N", string(data.Job.Commercial))
 
 	// Check commercial flag
 	data = &linkActivationDB{
@@ -95,7 +95,7 @@ func TestAggregateFields(t *testing.T) {
 	err = aggregateFields(data)
 	assert.Nil(t, err)
 	assert.Equal(t, "", string(data.Job.Emergency.Emergency))
-	assert.Equal(t, "t", string(data.Job.Commercial))
+	assert.Equal(t, "Y", string(data.Job.Commercial))
 
 	// Check forecast parsing
 	data = &linkActivationDB{

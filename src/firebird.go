@@ -520,9 +520,9 @@ func aggregateFields(data *linkActivationDB) error {
 
 	data.Job.Emergency.Emergency = data.Job.Emergency.Notified
 	if strings.HasSuffix(data.Job.AssistedVessel.Rego, "C") {
-		data.Job.Commercial = "t"
+		data.Job.Commercial = "Y"
 	} else {
-		data.Job.Commercial = "f"
+		data.Job.Commercial = "N"
 	}
 	if data.Job.Weather.Forecast != "" {
 		if err := parseForecast(&data.Job.Weather); err != nil {
