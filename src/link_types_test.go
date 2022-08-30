@@ -207,3 +207,109 @@ func TestVMRVesselNameEnum(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "Marine Rescue 5", string(n))
 }
+
+func TestBoatTypeEnum(t *testing.T) {
+	var b BoatTypeEnum
+	err := (&b).UnmarshalJSON([]byte(`"jetski"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "PWC", string(b))
+
+	err = (&b).UnmarshalJSON([]byte(`"Sailing Catamaran"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Sail", string(b))
+
+	err = (&b).UnmarshalJSON([]byte(`"double-masted YachT"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Sail", string(b))
+
+	err = (&b).UnmarshalJSON([]byte(`"KETCH"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Sail", string(b))
+
+	err = (&b).UnmarshalJSON([]byte(`"Schooner"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Sail", string(b))
+
+	err = (&b).UnmarshalJSON([]byte(`"The most common type"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Speed/Motor Boat", string(b))
+
+	err = (&b).UnmarshalJSON([]byte(`"kaYak"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Paddle", string(b))
+}
+
+func TestPropulsionTypeEnum(t *testing.T) {
+	var p PropulsionEnum
+	err := (&p).UnmarshalJSON([]byte(`"sail"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Sail", string(p))
+
+	err = (&p).UnmarshalJSON([]byte(`"Single OUTBOARD"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Single Outboard", string(p))
+
+	// Expected because we will set quantity from the TripWatch quantity field
+	err = (&p).UnmarshalJSON([]byte(`"Double OUTBOARD"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Single Outboard", string(p))
+
+	err = (&p).UnmarshalJSON([]byte(`"inboARD"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Single Inboard", string(p))
+
+	err = (&p).UnmarshalJSON([]byte(`"Paddles"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Oars", string(p))
+
+	err = (&p).UnmarshalJSON([]byte(`"Oars"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Oars", string(p))
+
+	err = (&p).UnmarshalJSON([]byte(`"WIND"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Sail", string(p))
+
+	err = (&p).UnmarshalJSON([]byte(`"SAILING"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Sail", string(p))
+}
+
+func TestPropulsionUpdateFromEngineQTY(t *testing.T) {
+	p := PropulsionEnum("Single Inboard")
+	qty := 1
+	assert.Nil(t, p.UpdateFromEngineQTY(qty))
+	assert.Equal(t, PropulsionEnum("Single Inboard"), p)
+	qty = 2
+	assert.Nil(t, p.UpdateFromEngineQTY(qty))
+	assert.Equal(t, PropulsionEnum("Twin Inboard"), p)
+	qty = 6
+	assert.Nil(t, p.UpdateFromEngineQTY(qty))
+	assert.Equal(t, PropulsionEnum("Twin Inboard"), p)
+	p = PropulsionEnum("Inboard")
+	qty = 2
+	assert.Nil(t, p.UpdateFromEngineQTY(qty))
+	assert.Equal(t, PropulsionEnum("Twin Inboard"), p)
+
+	p = PropulsionEnum("Single Outboard")
+	qty = 1
+	assert.Nil(t, p.UpdateFromEngineQTY(qty))
+	assert.Equal(t, PropulsionEnum("Single Outboard"), p)
+	qty = 2
+	assert.Nil(t, p.UpdateFromEngineQTY(qty))
+	assert.Equal(t, PropulsionEnum("Twin Outboard"), p)
+	p = PropulsionEnum("Single Outboard")
+	qty = 6
+	assert.Nil(t, p.UpdateFromEngineQTY(qty))
+	assert.Equal(t, PropulsionEnum("Twin Outboard"), p)
+
+	p = PropulsionEnum("Sail")
+	qty = 19
+	assert.Nil(t, p.UpdateFromEngineQTY(qty))
+	assert.Equal(t, PropulsionEnum("Sail"), p)
+
+	p = PropulsionEnum("Kayak")
+	qty = 2
+	assert.Nil(t, p.UpdateFromEngineQTY(qty))
+	assert.Equal(t, PropulsionEnum("Kayak"), p)
+}

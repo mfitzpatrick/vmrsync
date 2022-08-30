@@ -535,7 +535,17 @@ func aggregateFields(data *linkActivationDB) error {
 		}
 	}
 
+	if data.Job.AssistedVessel.Type != "" && data.Job.AssistedVessel.Propulsion != "" {
+		if err := aggregatePropulsion(&data.Job.AssistedVessel); err != nil {
+			return errors.Wrapf(err, "aggregateFields for vessel propulsion")
+		}
+	}
+
 	return nil
+}
+
+func aggregatePropulsion(vessel *AssistedVessel) error {
+	return vessel.Propulsion.UpdateFromEngineQTY(vessel.EngineQTY)
 }
 
 func parseForecast(weather *Weather) error {

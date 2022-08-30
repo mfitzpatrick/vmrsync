@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql/driver"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -31,14 +32,14 @@ type VMRVessel struct {
 }
 
 type AssistedVessel struct {
-	Rego       string     `firebird:"JOBVESSELREGO" len:"10" json:"activationsdvvesselsregistration"`
-	Name       string     `firebird:"JOBVESSELNAME" len:"30" json:"activationsdvvesselsname"`
-	Length     LengthEnum `firebird:"JOBLOA" len:"10" json:"activationsdvvesselslength"`
-	Type       string     `firebird:"JOBVESSELTYPE" len:"20" json:"activationsdvvesselstype"`
-	Propulsion string     `firebird:"JOBPROPULSION" len:"20" json:"activationsdvvesselsenginetype"`
-	EngineQTY  int        `json:"activationsdvvesselsenginequantity"`
-	NumAdults  int        `firebird:"JOBADULTS" json:"activationsdvpobadult"`
-	NumKids    int        `firebird:"JOBCHILDREN" json:"activationsdvpobchildren"`
+	Rego       string         `firebird:"JOBVESSELREGO" len:"10" json:"activationsdvvesselsregistration"`
+	Name       string         `firebird:"JOBVESSELNAME" len:"30" json:"activationsdvvesselsname"`
+	Length     LengthEnum     `firebird:"JOBLOA" len:"10" json:"activationsdvvesselslength"`
+	Type       BoatTypeEnum   `firebird:"JOBVESSELTYPE" len:"20" json:"activationsdvvesselstype"`
+	Propulsion PropulsionEnum `firebird:"JOBPROPULSION" len:"20" json:"activationsdvvesselsenginetype"`
+	EngineQTY  int            `json:"activationsdvvesselsenginequantity"`
+	NumAdults  int            `firebird:"JOBADULTS" json:"activationsdvpobadult"`
+	NumKids    int            `firebird:"JOBCHILDREN" json:"activationsdvpobchildren"`
 }
 
 type Emergency struct {
@@ -469,4 +470,71 @@ func (n *VMRVesselNameEnum) UnmarshalJSON(bytes []byte) error {
 		}
 		return nil
 	}
+}
+
+type BoatTypeEnum string
+
+func (b *BoatTypeEnum) UnmarshalJSON(bytes []byte) error {
+	var bn string
+	if err := json.Unmarshal(bytes, &bn); err != nil {
+		return errors.Wrapf(err, "BoatTypeEnum parse JSON '%s'", string(bytes))
+	} else {
+		bn = strings.ToLower(bn)
+		switch {
+		case strings.Contains(bn, "jet ski"), strings.Contains(bn, "jetski"):
+			*b = "PWC"
+		case strings.Contains(bn, "yacht"), strings.Contains(bn, "sail"),
+			strings.Contains(bn, "ketch"), strings.Contains(bn, "schooner"):
+			*b = "Sail"
+		case strings.Contains(bn, "kayak"), strings.Contains(bn, "paddle"):
+			*b = "Paddle"
+		default:
+			*b = "Speed/Motor Boat"
+		}
+	}
+	return nil
+}
+
+type PropulsionEnum string
+
+func (p *PropulsionEnum) UnmarshalJSON(bytes []byte) error {
+	var pn string
+	if err := json.Unmarshal(bytes, &pn); err != nil {
+		return errors.Wrapf(err, "PropulsionEnum parse JSON '%s'", string(bytes))
+	} else {
+		pn = strings.ToLower(pn)
+		switch {
+		case strings.Contains(pn, "outboard"):
+			*p = "Single Outboard"
+		case strings.Contains(pn, "inboard"):
+			*p = "Single Inboard"
+		case strings.Contains(pn, "paddle"), strings.Contains(pn, "oar"):
+			*p = "Oars"
+		case strings.Contains(pn, "wind"), strings.Contains(pn, "sail"):
+			*p = "Sail"
+		default:
+			*p = "Single Outboard"
+		}
+	}
+	return nil
+}
+
+func (p *PropulsionEnum) UpdateFromEngineQTY(qty int) error {
+	var prefix string
+	switch qty {
+	case 1:
+		prefix = "Single"
+	default:
+		prefix = "Twin"
+	}
+	var suffix string
+	if strings.Contains(string(*p), "Outboard") {
+		suffix = "Outboard"
+	} else if strings.Contains(string(*p), "Inboard") {
+		suffix = "Inboard"
+	}
+	if suffix != "" {
+		*p = PropulsionEnum(fmt.Sprintf("%s %s", prefix, suffix))
+	}
+	return nil
 }

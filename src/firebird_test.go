@@ -161,4 +161,66 @@ func TestAggregateFields(t *testing.T) {
 	assert.Equal(t, 153, data.Job.GPS.LongD)
 	assert.Equal(t, 41, data.Job.GPS.LongM)
 	assert.InDelta(t, 59.9, data.Job.GPS.LongS, 0.1)
+
+	// Check Vessel Propulsion
+	data = &linkActivationDB{
+		Job: Job{
+			AssistedVessel: AssistedVessel{
+				Type:       "Speed/Motor Boat",
+				Propulsion: "Single Outboard",
+				EngineQTY:  1,
+			},
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, PropulsionEnum("Single Outboard"), data.Job.AssistedVessel.Propulsion)
+	data = &linkActivationDB{
+		Job: Job{
+			AssistedVessel: AssistedVessel{
+				Type:       "Speed/Motor Boat",
+				Propulsion: "Single Outboard",
+				EngineQTY:  2,
+			},
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, PropulsionEnum("Twin Outboard"), data.Job.AssistedVessel.Propulsion)
+	data = &linkActivationDB{
+		Job: Job{
+			AssistedVessel: AssistedVessel{
+				Type:       "Speed/Motor Boat",
+				Propulsion: "Single Inboard",
+				EngineQTY:  2,
+			},
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, PropulsionEnum("Twin Inboard"), data.Job.AssistedVessel.Propulsion)
+	data = &linkActivationDB{
+		Job: Job{
+			AssistedVessel: AssistedVessel{
+				Type:       "Speed/Motor Boat",
+				Propulsion: "Sail",
+				EngineQTY:  6,
+			},
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, PropulsionEnum("Sail"), data.Job.AssistedVessel.Propulsion)
+	data = &linkActivationDB{
+		Job: Job{
+			AssistedVessel: AssistedVessel{
+				Type:       "Kayak",
+				Propulsion: "Oars",
+				EngineQTY:  3,
+			},
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, PropulsionEnum("Oars"), data.Job.AssistedVessel.Propulsion)
 }
