@@ -369,9 +369,7 @@ func TestSendToDB_NewRecord(t *testing.T) {
 				PoliceNum: "987654321",
 				Notified:  "t",
 			},
-			GPS: GPS{
-				TWLatLong: "-27.5,153.7",
-			},
+			Pos: GPS{-27.5, 153.7},
 			VMRVessel: VMRVessel{
 				ID:             2,
 				Name:           "Marine Rescue 2",

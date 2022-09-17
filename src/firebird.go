@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"math"
 	"reflect"
 	"strconv"
 	"strings"
@@ -529,8 +528,8 @@ func aggregateFields(data *linkActivationDB) error {
 			return errors.Wrapf(err, "aggregateFields parsing forecast failed")
 		}
 	}
-	if data.Job.GPS.TWLatLong != "" {
-		if err := parseGPS(&data.Job.GPS); err != nil {
+	if !data.Job.Pos.IsZero() {
+		if err := parseGPS(data.Job.Pos, &data.Job.FirebirdGPS); err != nil {
 			return errors.Wrapf(err, "aggregateFields parsing latlong")
 		}
 	}
@@ -600,39 +599,18 @@ func parseForecast(weather *Weather) error {
 	return nil
 }
 
-func parseGPS(gps *GPS) error {
-	if gps.TWLatLong == "" {
-		return errors.Errorf("tripwatch lat/long can't be empty")
-	}
-
-	splitStr := strings.Split(gps.TWLatLong, ",")
-	if len(splitStr) != 2 {
-		// Try splitting on spaces
-		splitStr = strings.Split(gps.TWLatLong, " ")
-		if len(splitStr) != 2 {
-			return errors.Errorf("TripWatch lat/long string is not 2 entries: '%s'", gps.TWLatLong)
-		}
-	}
-	if lat, err := strconv.ParseFloat(strings.TrimSpace(strings.Trim(splitStr[0], "\"")), 64); err != nil {
-		return errors.Wrapf(err, "TripWatch parse GPS lat '%s'", splitStr[0])
-	} else if long, err := strconv.ParseFloat(strings.TrimSpace(strings.Trim(splitStr[1], "\"")), 64); err != nil {
-		return errors.Wrapf(err, "TripWatch parse GPS long '%s'", splitStr[1])
+func parseGPS(pos GPS, gps *FirebirdGPS) error {
+	if dms, err := pos.AsDMS(); err != nil {
+		return errors.Wrapf(err, "parse GPS can't convert to DMS")
 	} else {
-		gps.Lat = lat
-		gps.Long = long
-
-		// Convert to DMS for Firebase DB fields
-		latD, latDM := math.Modf(math.Abs(lat))
-		gps.LatD = int(latD)
-		latM, latDS := math.Modf(latDM * 60)
-		gps.LatM = int(latM)
-		gps.LatS = latDS * 60
-
-		longD, longDM := math.Modf(long)
-		gps.LongD = int(longD)
-		longM, longDS := math.Modf(longDM * 60)
-		gps.LongM = int(longM)
-		gps.LongS = longDS * 60
+		gps.Lat = pos.Lat
+		gps.Long = pos.Long
+		gps.LatD = dms.Lat.Deg
+		gps.LatM = dms.Lat.Min
+		gps.LatS = dms.Lat.Sec
+		gps.LongD = dms.Long.Deg
+		gps.LongM = dms.Long.Min
+		gps.LongS = dms.Long.Sec
 	}
 
 	return nil

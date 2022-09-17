@@ -129,38 +129,34 @@ func TestAggregateFields(t *testing.T) {
 	// Check GPS parsing
 	data = &linkActivationDB{
 		Job: Job{
-			GPS: GPS{
-				TWLatLong: "-27.5,153.7",
-			},
+			Pos: GPS{-27.5, 153.7},
 		},
 	}
 	err = aggregateFields(data)
 	assert.Nil(t, err)
-	assert.Equal(t, -27.5, data.Job.GPS.Lat)
-	assert.Equal(t, 153.7, data.Job.GPS.Long)
-	assert.Equal(t, 27, data.Job.GPS.LatD)
-	assert.Equal(t, 30, data.Job.GPS.LatM)
-	assert.InDelta(t, 0.0, data.Job.GPS.LatS, 0.1)
-	assert.Equal(t, 153, data.Job.GPS.LongD)
-	assert.Equal(t, 41, data.Job.GPS.LongM)
-	assert.InDelta(t, 59.9, data.Job.GPS.LongS, 0.1)
+	assert.Equal(t, -27.5, data.Job.FirebirdGPS.Lat)
+	assert.Equal(t, 153.7, data.Job.FirebirdGPS.Long)
+	assert.Equal(t, 27, data.Job.FirebirdGPS.LatD)
+	assert.Equal(t, 30, data.Job.FirebirdGPS.LatM)
+	assert.InDelta(t, 0.0, data.Job.FirebirdGPS.LatS, 0.1)
+	assert.Equal(t, 153, data.Job.FirebirdGPS.LongD)
+	assert.Equal(t, 41, data.Job.FirebirdGPS.LongM)
+	assert.InDelta(t, 59.9, data.Job.FirebirdGPS.LongS, 0.1)
 	data = &linkActivationDB{
 		Job: Job{
-			GPS: GPS{
-				TWLatLong: "-27.5 153.7",
-			},
+			Pos: GPS{-27.5, 153.7},
 		},
 	}
 	err = aggregateFields(data)
 	assert.Nil(t, err)
-	assert.Equal(t, -27.5, data.Job.GPS.Lat)
-	assert.Equal(t, 153.7, data.Job.GPS.Long)
-	assert.Equal(t, 27, data.Job.GPS.LatD)
-	assert.Equal(t, 30, data.Job.GPS.LatM)
-	assert.InDelta(t, 0.0, data.Job.GPS.LatS, 0.1)
-	assert.Equal(t, 153, data.Job.GPS.LongD)
-	assert.Equal(t, 41, data.Job.GPS.LongM)
-	assert.InDelta(t, 59.9, data.Job.GPS.LongS, 0.1)
+	assert.Equal(t, -27.5, data.Job.FirebirdGPS.Lat)
+	assert.Equal(t, 153.7, data.Job.FirebirdGPS.Long)
+	assert.Equal(t, 27, data.Job.FirebirdGPS.LatD)
+	assert.Equal(t, 30, data.Job.FirebirdGPS.LatM)
+	assert.InDelta(t, 0.0, data.Job.FirebirdGPS.LatS, 0.1)
+	assert.Equal(t, 153, data.Job.FirebirdGPS.LongD)
+	assert.Equal(t, 41, data.Job.FirebirdGPS.LongM)
+	assert.InDelta(t, 59.9, data.Job.FirebirdGPS.LongS, 0.1)
 
 	// Check Vessel Propulsion
 	data = &linkActivationDB{
