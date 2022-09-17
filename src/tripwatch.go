@@ -76,7 +76,23 @@ func getOneActivation(ctx context.Context, id int) (linkActivationDB, error) {
 		return linkActivationDB{}, errors.Wrapf(err, "get one activation body read for ID %d", id)
 	} else if err := json.Unmarshal([]byte(body), &activation); err != nil {
 		return linkActivationDB{}, errors.Wrapf(err, "get one activation body parse for ID %d '%s'", id, body)
+	} else if sitreps, err := getSitrepsForActivation(ctx, id); err != nil {
+		return linkActivationDB{}, errors.Wrapf(err, "list sitreps for activation %d", id)
 	} else {
+		activation.Sitreps = sitreps
 		return activation, nil
+	}
+}
+
+func getSitrepsForActivation(ctx context.Context, id int) ([]Sitrep, error) {
+	var sitreps []Sitrep
+	if resp, err := tripwatchCall(ctx, http.MethodGet, fmt.Sprintf("/activationtransactions/%d", id), ""); err != nil {
+		return []Sitrep{}, errors.Wrapf(err, "list sitreps call for ID %d", id)
+	} else if body, err := ioutil.ReadAll(resp.Body); err != nil {
+		return []Sitrep{}, errors.Wrapf(err, "list sitreps body read for ID %d", id)
+	} else if err := json.Unmarshal([]byte(body), &sitreps); err != nil {
+		return []Sitrep{}, errors.Wrapf(err, "list sitreps body parse for ID %d '%s'", id, body)
+	} else {
+		return sitreps, nil
 	}
 }

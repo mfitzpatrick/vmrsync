@@ -220,3 +220,58 @@ func TestAggregateFields(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, PropulsionEnum("Oars"), data.Job.AssistedVessel.Propulsion)
 }
+
+func TestSetGPS(t *testing.T) {
+	// Just pick the first sitrep in the list
+	data := linkActivationDB{
+		Sitreps: []Sitrep{
+			{Pos: GPS{-27.557, 153.456}, Comment: "Going for a run"},
+			{Pos: GPS{-27.537, 153.156}, Comment: "Returning to base now."},
+			{Pos: GPS{-27.597, 153.457}, Comment: "No, going somewhere else"},
+			{Pos: GPS{-27.502, 153.856}, Comment: "Returning to base now.. Again."},
+		},
+	}
+	err := setGPS(&data)
+	assert.Nil(t, err)
+	assert.Equal(t, -27.557, data.Job.FirebirdGPS.Lat)
+	assert.Equal(t, 153.456, data.Job.FirebirdGPS.Long)
+
+	// Arrived at target is prioritised
+	data = linkActivationDB{
+		Sitreps: []Sitrep{
+			{Pos: GPS{-27.123, 153}, Comment: "I have made it to the seaway"},
+			{Pos: GPS{-27, 153.456}, Comment: "RV has arrived at target -> DMS"},
+			{Pos: GPS{-27, 153.789}, Comment: "Target vessel in tow and on its way to my house"},
+			{Pos: GPS{-27.557, 153.456}, Comment: "Returning to base now."},
+		},
+	}
+	err = setGPS(&data)
+	assert.Nil(t, err)
+	assert.Equal(t, -27.0, data.Job.FirebirdGPS.Lat)
+	assert.Equal(t, 153.456, data.Job.FirebirdGPS.Long)
+
+	// Vessel in tow is prioritised
+	data = linkActivationDB{
+		Sitreps: []Sitrep{
+			{Pos: GPS{-27.123, 153}, Comment: "I have made it to the seaway"},
+			{Pos: GPS{-27, 153.789}, Comment: "Target vessel in tow and on its way to my house"},
+			{Pos: GPS{-27.557, 153.456}, Comment: "Returning to base now."},
+		},
+	}
+	err = setGPS(&data)
+	assert.Nil(t, err)
+	assert.Equal(t, -27.0, data.Job.FirebirdGPS.Lat)
+	assert.Equal(t, 153.789, data.Job.FirebirdGPS.Long)
+
+	// Use the manually-entered GPS as final resort if no sitreps are present
+	data = linkActivationDB{
+		Job: Job{
+			Pos: GPS{-27.999, 153.0877},
+		},
+		Sitreps: []Sitrep{},
+	}
+	err = setGPS(&data)
+	assert.Nil(t, err)
+	assert.Equal(t, -27.999, data.Job.FirebirdGPS.Lat)
+	assert.Equal(t, 153.0877, data.Job.FirebirdGPS.Long)
+}

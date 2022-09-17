@@ -78,3 +78,17 @@ func TestStrlenField(t *testing.T) {
 	obj := reflect.ValueOf(linkActivationDB{})
 	findAllStrings(t, obj)
 }
+
+func TestSitrepGet(t *testing.T) {
+	s := []Sitrep{{Pos: GPS{-27, 153}, Comment: "Fake"}}
+	_, err := getEntryForComment(s, "RV has arrived at target")
+	assert.ErrorIs(t, err, sitrepNotFoundError)
+
+	s = []Sitrep{
+		{Pos: GPS{-27, 153}, Comment: "Fake"},
+		{Pos: GPS{-27, 153}, Comment: "RV has arrived at target -> DMS"},
+	}
+	sr, err := getEntryForComment(s, "RV has arrived at target")
+	assert.Nil(t, err)
+	assert.Equal(t, GPS{-27, 153}, sr.Pos)
+}

@@ -528,8 +528,8 @@ func aggregateFields(data *linkActivationDB) error {
 			return errors.Wrapf(err, "aggregateFields parsing forecast failed")
 		}
 	}
-	if !data.Job.Pos.IsZero() {
-		if err := parseGPS(data.Job.Pos, &data.Job.FirebirdGPS); err != nil {
+	if !data.Job.Pos.IsZero() || len(data.Sitreps) > 0 {
+		if err := setGPS(data); err != nil {
 			return errors.Wrapf(err, "aggregateFields parsing latlong")
 		}
 	}
@@ -599,18 +599,43 @@ func parseForecast(weather *Weather) error {
 	return nil
 }
 
-func parseGPS(pos GPS, gps *FirebirdGPS) error {
-	if dms, err := pos.AsDMS(); err != nil {
-		return errors.Wrapf(err, "parse GPS can't convert to DMS")
-	} else {
-		gps.Lat = pos.Lat
-		gps.Long = pos.Long
-		gps.LatD = dms.Lat.Deg
-		gps.LatM = dms.Lat.Min
-		gps.LatS = dms.Lat.Sec
-		gps.LongD = dms.Long.Deg
-		gps.LongM = dms.Long.Min
-		gps.LongS = dms.Long.Sec
+// Select a GPS value to set in Firebird by searching through the list of job Sitreps as well as
+// the manually-entered GPS value. The job sitreps will be taken as precedence, and any sitrep
+// where the RV arrives at a target is the main preference.
+func setGPS(data *linkActivationDB) error {
+	set := func(gps *FirebirdGPS, pos GPS) error {
+		if dms, err := pos.AsDMS(); err != nil {
+			return errors.Wrapf(err, "setGPS internal set func")
+		} else {
+			gps.Lat = pos.Lat
+			gps.Long = pos.Long
+			gps.LatD = dms.Lat.Deg
+			gps.LatM = dms.Lat.Min
+			gps.LatS = dms.Lat.Sec
+			gps.LongD = dms.Long.Deg
+			gps.LongM = dms.Long.Min
+			gps.LongS = dms.Long.Sec
+			return nil
+		}
+	}
+
+	if sr, err := getEntryForComment(data.Sitreps, "RV has arrived at target"); err == nil {
+		if err := set(&data.Job.FirebirdGPS, sr.Pos); err == nil {
+			return nil
+		}
+	}
+	if sr, err := getEntryForComment(data.Sitreps, "Target vessel in tow"); err == nil {
+		if err := set(&data.Job.FirebirdGPS, sr.Pos); err == nil {
+			return nil
+		}
+	}
+	if len(data.Sitreps) > 0 {
+		if err := set(&data.Job.FirebirdGPS, data.Sitreps[0].Pos); err == nil {
+			return nil
+		}
+	}
+	if err := set(&data.Job.FirebirdGPS, data.Job.Pos); err != nil {
+		return errors.Wrapf(err, "parse GPS setting from overall job pos")
 	}
 
 	return nil

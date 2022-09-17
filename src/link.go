@@ -99,6 +99,7 @@ type linkActivationDB struct {
 	Created CustomJSONTime `json:"created_at"`
 	Updated CustomJSONTime `json:"updated_at"`
 	Job     `firebird:"DUTYJOBS"`
+	Sitreps []Sitrep
 }
 
 type DutyLogTable struct {
@@ -140,6 +141,24 @@ type crewOnJob struct {
 	Member     `firebird:"MEMBERS"`
 	CrewOnDuty `firebird:"DUTYCREWS"`
 	JobCrew    `firebird:"DUTYJOBSCREW"`
+}
+
+// This matches the data returned by the /activationtransactions API.
+type Sitrep struct {
+	Updated CustomJSONTime `json:"updated_at"`
+	Pos     GPS            `json:"activationstransactionscurrentposition"`
+	Comment string         `json:"activationstransactionsnote"`
+}
+
+var sitrepNotFoundError = errors.New("sitrep not found")
+
+func getEntryForComment(s []Sitrep, comment string) (Sitrep, error) {
+	for _, sr := range s {
+		if strings.HasPrefix(sr.Comment, comment) && !sr.Pos.IsZero() {
+			return sr, nil
+		}
+	}
+	return Sitrep{}, errors.Wrapf(sitrepNotFoundError, "get entry for comment %s", comment)
 }
 
 /*

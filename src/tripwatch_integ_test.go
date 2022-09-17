@@ -39,10 +39,23 @@ func TestIntegTripwatchCallHelper(t *testing.T) {
 func TestIntegTripwatchListActivations(t *testing.T) {
 	list, err := listActivations(context.Background())
 	assert.Nil(t, err)
-	assert.Equal(t, 2, len(list))
+	assert.Equal(t, 7, len(list))
 	assert.Equal(t, 86239, list[0].ID)
 	assert.Equal(t, "Marine Rescue 1", string(list[0].Job.VMRVessel.Name))
 	assert.Equal(t, 86297, list[1].ID)
 	assert.Equal(t, "Marine Rescue 2", string(list[1].Job.VMRVessel.Name))
 	assert.Equal(t, getTime(t, "2022-05-27T00:58:00Z"), time.Time(list[1].Job.StartTime))
+}
+
+func TestIntegTripwatchGetOneActivation(t *testing.T) {
+	a, err := getOneActivation(context.Background(), 86359)
+	assert.Nil(t, err)
+	assert.Equal(t, "InProgress", a.Job.Status)
+	assert.Equal(t, 3, len(a.Sitreps))
+	assert.Equal(t, GPS{-27.475458084334857, 153.15326141723338}, a.Sitreps[0].Pos)
+	// Test GPS field aggregation
+	err = aggregateFields(&a)
+	assert.Nil(t, err)
+	assert.Equal(t, -27.475458084334857, a.Job.FirebirdGPS.Lat)
+	assert.Equal(t, 153.15326141723338, a.Job.FirebirdGPS.Long)
 }
