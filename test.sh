@@ -75,7 +75,7 @@ if [ "$test_type" = "integration" ]; then
     clean  # Cleanup any previous DB instances if any can be found
 
     cd "$BASE/src"
-    CONFIG_FILE="$BASE/tripwatch-test/test-config.yml" go test -tags integration -o "$BASE/testbin" -c
+    go test -tags integration -o "$BASE/testbin" -c
     test_result=$?
     if [ "0" != "$test_result" ]; then
         echo "Go test build failure: $test_result"
@@ -83,7 +83,7 @@ if [ "$test_type" = "integration" ]; then
     fi
     sh "$BASE/dbtest/start.sh" "test"
     docker-compose -f "$BASE/tripwatch-test/docker-compose.yml" up -d
-    CONFIG_FILE="$BASE/tripwatch-test/test-config.yml" "$BASE/testbin"
+    "$BASE/testbin" -config-file="$BASE/tripwatch-test/test-config.yml"
     test_result=$?
     docker-compose -f "$BASE/dbtest/docker-compose.yml" -f "$BASE/tripwatch-test/docker-compose.yml" logs
     if [ -n "$MANUALDB" ]; then
@@ -116,6 +116,6 @@ fi
 
 if [ "$test_type" = "mrqemail" ]; then
     cd "$BASE/newemail"
-    CONFIG_FILE="$BASE/tripwatch-test/test-config.yml" go run .
+    go run . -config-file="$BASE/tripwatch-test/test-config.yml"
 fi
 

@@ -6,8 +6,8 @@ the local database (which is [Firebird](https://firebirdsql.org/)) with
 ## Getting Started
 The server first must be configured with API keys for TripWatch access, as well as
 the TripWatch server's location. The file structure is in YAML and its default
-expected location is in `src/.config.yml`, however the file location can be changed
-by setting the `CONFIG_FILE` environment variable.
+expected location is in the same directory as the application, however the file location
+can be changed by setting the `-config-file` flag.
 
 Example file structure:
 ```
@@ -69,4 +69,25 @@ the DB is actually running):
 ```
 sh ./test.sh inspect
 ```
+
+## Windows Service
+In order for this to run normally as a Windows Service on a PC, this must first implement
+the Windows Service Interface and install itself as a service. This is something that only
+applies to Windows Services, and therefore should be ignored and skipped when running on
+any other platform, or being debugged.
+
+To do this, the program conditionally-compiles in the `winsvc.go` file when building for
+Windows to enable the service. When the program runs as a userspace app, it will:
+- Check for any preinstalled and running instances of itself as a service and stop/delete them.
+- Install itself as a service, start its service, and then exit from the userspace app.
+
+When it runs as a servicespace app it will:
+- Run the service event loop.
+
+The service can otherwise be controlled by the `Service Control Manager` program shipped
+with Windows. This program can also be accessed from an Administrator CMD prompt window via
+the `sc` utility. Run `sc help` for a list of supported commands, but in-short:
+- `sc create VMRSync <bin path> <options...>` creates a new service with this name
+- `sc queryex VMRSync` gives data about the installed service
+- `sc delete VMRSync` deletes the installed service
 

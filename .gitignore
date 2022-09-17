@@ -1,4 +1,5 @@
 .*
+*.exe
 
 dbtest/user-init.sql
 dbtest/VMRMEMBERS.FDB

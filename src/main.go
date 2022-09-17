@@ -3,15 +3,20 @@ package main
 import (
 	"context"
 	"database/sql"
+	"flag"
 	"fmt"
-	"log"
-	"os"
 	"strings"
 	"time"
 
 	_ "github.com/nakagami/firebirdsql"
 	"github.com/pkg/errors"
 )
+
+var configFilePath = flag.String("config-file", ".config.yml", "Configuration YAML file")
+
+func init() {
+	flag.Parse()
+}
 
 // Error type returned by the run() function in main.go
 type runError struct {
@@ -48,14 +53,19 @@ func openDB() (*sql.DB, error) {
 	return sql.Open("firebirdsql", dbConnStr)
 }
 
-func openConfig() error {
-	cfgFileName := os.Getenv("CONFIG_FILE")
-	if cfgFileName == "" {
-		cfgFileName = ".config.yml"
+func setup() (*sql.DB, func(), error) {
+	if err := parseConfig(*configFilePath); err != nil {
+		return nil, nil, errors.Wrapf(err, "Config parsing failed")
+	} else if db, err := openDB(); err != nil {
+		return nil, nil, errors.Wrapf(err, "Unable to open DB")
+	} else if err := db.Ping(); err != nil {
+		return nil, nil, errors.Wrapf(err, "No connection to DB")
+	} else {
+		return db, func() { db.Close() }, nil
 	}
-	return errors.Wrapf(parseConfig(cfgFileName), "parse config in main")
 }
 
+// Primary execution cycle. This retrieves data from TripWatch and sends it to the Firebird DB.
 func run(db *sql.DB) []error {
 	var errlist []error
 	// Shouldn't take more than 60s to perform the whole update (read and write)
@@ -80,34 +90,8 @@ func run(db *sql.DB) []error {
 }
 
 func main() {
-	if err := openConfig(); err != nil {
-		log.Fatalf("Config parsing failed: %v", err)
-	} else if db, err := openDB(); err != nil {
-		log.Fatalf("Unable to open DB: %v", err)
-	} else if err := db.Ping(); err != nil {
-		log.Fatalf("No connection to DB: %v", err)
-	} else {
-		defer db.Close()
-
-		// Run an infinite loop reading data from TripWatch and synchronising it with the
-		// Firebird DB.
-		for {
-			if errlist := run(db); len(errlist) > 0 {
-				for _, err := range errlist {
-					if errors.Is(err, matchFieldIsZero) {
-						var runerr runError
-						if ok := errors.As(err, &runerr); ok {
-							log.Printf("Couldn't match field for %s",
-								runerr.String())
-						} else {
-							log.Printf("Missing match field (and runError object)")
-						}
-					} else {
-						log.Printf("Run loop failure: %+v", err)
-					}
-				}
-			}
-			time.Sleep(tripwatchPollFrequency)
-		}
-	}
+	// Run an infinite loop reading data from TripWatch and synchronising it with the
+	// Firebird DB.
+	// NB: this function is conditionally linked due to tags issued at build time.
+	runLoop()
 }

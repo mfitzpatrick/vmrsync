@@ -6,7 +6,7 @@ on:
       - v*
 
 env:
-  WIN64BIN: vmrsync-win64.exe
+  WIN64BIN: vmrsync-win64-svc.exe
   TAG: ${{ github.ref }}
 
 jobs:
@@ -21,7 +21,7 @@ jobs:
         env:
           GOOS: windows
           GOARCH: amd64
-        run: go build -o ${{ github.workspace }}/${{ env.WIN64BIN }}
+        run: go build -tags service -o ${{ github.workspace }}/${{ env.WIN64BIN }}
 
       - name: Create release
         id: create_release

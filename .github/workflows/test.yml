@@ -15,3 +15,10 @@ jobs:
       - name: Run Tests
         run: ./test.sh integration
 
+      - name: Check Windows Service build
+        working-directory: ./src
+        env:
+          GOOS: windows
+          GOARCH: amd64
+        run: go build -tags service
+
