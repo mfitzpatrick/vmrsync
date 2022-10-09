@@ -407,11 +407,28 @@ func (j *JobType) UnmarshalJSON(bytes []byte) error {
 			*j = JobType("Training/Patrol")
 		case "Scattering of Ashes":
 			*j = JobType("Dispersal")
+		case "Public Service":
+			*j = JobType("PR/Promo")
+		case "MAYDAY", "PANPAN":
+			*j = JobType("EPIRB")
 		default:
 			*j = JobType(jt)
 		}
 		return nil
 	}
+}
+
+func (j JobType) ToJobAction() JobAction {
+	var action JobAction
+	switch j {
+	case "Training/Patrol":
+		action = JobAction("Training")
+	case "Medical":
+		action = JobAction("Medivac")
+	default:
+		action = JobAction("Other")
+	}
+	return action
 }
 
 type JobAction string

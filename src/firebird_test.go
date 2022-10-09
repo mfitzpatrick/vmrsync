@@ -219,6 +219,43 @@ func TestAggregateFields(t *testing.T) {
 	err = aggregateFields(data)
 	assert.Nil(t, err)
 	assert.Equal(t, PropulsionEnum("Oars"), data.Job.AssistedVessel.Propulsion)
+
+	// Check action type is transferred in select cases
+	data = &linkActivationDB{
+		Job: Job{
+			Type: "Training/Patrol",
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, JobAction("Training"), data.Job.Action)
+	data = &linkActivationDB{
+		Job: Job{
+			Type:   "Training/Patrol",
+			Action: "Other",
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	// Action is preserved if it is set
+	assert.Equal(t, JobAction("Training"), data.Job.Action)
+	data = &linkActivationDB{
+		Job: Job{
+			Type:   "Training/Patrol",
+			Action: "Dispersal",
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, JobAction("Dispersal"), data.Job.Action)
+	data = &linkActivationDB{
+		Job: Job{
+			Type: "Medical",
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, JobAction("Medivac"), data.Job.Action)
 }
 
 func TestSetGPS(t *testing.T) {

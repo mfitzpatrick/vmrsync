@@ -135,6 +135,11 @@ func TestJobType(t *testing.T) {
 	assert.Equal(t, "Other type", string(j))
 }
 
+func TestJobTypeToAction(t *testing.T) {
+	assert.Equal(t, "Training", string(JobType("Training/Patrol").ToJobAction()))
+	assert.Equal(t, "Medivac", string(JobType("Medical").ToJobAction()))
+}
+
 func TestJobAction(t *testing.T) {
 	var j JobAction
 	err := (&j).UnmarshalJSON([]byte(`"Tow"`))

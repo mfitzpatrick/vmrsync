@@ -539,6 +539,10 @@ func aggregateFields(data *linkActivationDB) error {
 			return errors.Wrapf(err, "aggregateFields for vessel propulsion")
 		}
 	}
+	if (data.Job.Action == JobAction("") || data.Job.Action == JobAction("Other")) &&
+		data.Job.Type != JobType("") {
+		data.Job.Action = data.Job.Type.ToJobAction()
+	}
 
 	return nil
 }
