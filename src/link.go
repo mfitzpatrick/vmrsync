@@ -527,7 +527,9 @@ func (b *BoatTypeEnum) UnmarshalJSON(bytes []byte) error {
 		case strings.Contains(bn, "kayak"), strings.Contains(bn, "paddle"):
 			*b = "Paddle"
 		default:
-			*b = "Speed/Motor Boat"
+			if len(bn) > 0 {
+				*b = "Speed/Motor Boat"
+			}
 		}
 	}
 	return nil

@@ -242,6 +242,20 @@ func TestBoatTypeEnum(t *testing.T) {
 	err = (&b).UnmarshalJSON([]byte(`"kaYak"`))
 	assert.Nil(t, err)
 	assert.Equal(t, "Paddle", string(b))
+
+	// Check that a miscellaneous field is set as a speed boat
+	err = (&b).UnmarshalJSON([]byte(`"*"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Speed/Motor Boat", string(b))
+
+	// Check that a NULL or empty field is ignored
+	b = BoatTypeEnum("")
+	err = (&b).UnmarshalJSON([]byte(`null`))
+	assert.Nil(t, err)
+	assert.Equal(t, "", string(b))
+	err = (&b).UnmarshalJSON([]byte(`""`))
+	assert.Nil(t, err)
+	assert.Equal(t, "", string(b))
 }
 
 func TestPropulsionTypeEnum(t *testing.T) {
