@@ -39,6 +39,9 @@ func (g *GPS) UnmarshalJSON(bytes []byte) error {
 	// Split string into pieces based on spaces or commas
 	if floats, err := pullFloatsFromString(rawString); err != nil {
 		return errors.Wrapf(err, "unmarshal GPS float extraction from '%s'", rawString)
+	} else if len(floats) == 1 && floats[0] == 0 {
+		// Special case - a zero-value is input to ignore this field. Leave the lat and long
+		// values as 0 and do no further actions.
 	} else if len(floats) != 2 {
 		return errors.Errorf("unmarshal GPS expected exactly 2 numbers, got %d from %s",
 			len(floats), rawString)

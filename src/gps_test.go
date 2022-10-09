@@ -21,7 +21,15 @@ func TestGPS(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, GPS{Lat: -27.475458084334857, Long: 153.15326141723338}, g)
 
+	err = (&g).UnmarshalJSON([]byte(`" -27.475458084334857   153.15326141723338  "`))
+	assert.Nil(t, err)
+	assert.Equal(t, GPS{Lat: -27.475458084334857, Long: 153.15326141723338}, g)
+
 	err = (&g).UnmarshalJSON([]byte(`"-27.475458084334857,153.15326141723338"`))
+	assert.Nil(t, err)
+	assert.Equal(t, GPS{Lat: -27.475458084334857, Long: 153.15326141723338}, g)
+
+	err = (&g).UnmarshalJSON([]byte(`"-27.475458084334857 ,   153.15326141723338"`))
 	assert.Nil(t, err)
 	assert.Equal(t, GPS{Lat: -27.475458084334857, Long: 153.15326141723338}, g)
 
@@ -50,6 +58,18 @@ func TestGPS(t *testing.T) {
 			Sec:        11.741102040170972,
 		},
 	}, dms)
+
+	// Check zero-value handling
+	g = GPS{}
+	err = (&g).UnmarshalJSON([]byte(`"0"`))
+	assert.Nil(t, err)
+	assert.Equal(t, GPS{Lat: 0, Long: 0}, g)
+	err = (&g).UnmarshalJSON([]byte(`"0 0  "`))
+	assert.Nil(t, err)
+	assert.Equal(t, GPS{Lat: 0, Long: 0}, g)
+	err = (&g).UnmarshalJSON([]byte(`"  0   "`))
+	assert.Nil(t, err)
+	assert.Equal(t, GPS{Lat: 0, Long: 0}, g)
 }
 
 func TestDMSFromDD(t *testing.T) {
