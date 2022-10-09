@@ -12,7 +12,7 @@ import (
 
 func init() {
 	// For integration tests, we need to read the configuration file
-	if err := parseConfig(*configFilePath); err != nil {
+	if err := parseConfig(configFilePath); err != nil {
 		log.Fatalf("Config parsing failed: %v", err)
 	}
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -27,6 +28,13 @@ func getTimeFromAEST(t *testing.T, ts string) time.Time {
 	tm, err := time.ParseInLocation(time.RFC3339, ts, tz)
 	assert.Nil(t, err)
 	return tm.UTC()
+}
+
+// As-per golang testing docs, we need to explicitly call the flag.Parse function from a TestMain()
+// instance if any of our tests depend on application flags (which we do for config file parsing).
+func TestMain(m *testing.M) {
+	setupFlags()
+	os.Exit(m.Run())
 }
 
 func TestGetTimeFromAEST(t *testing.T) {

@@ -64,7 +64,7 @@ func (s *winsvc) Execute(args []string, r <-chan svc.ChangeRequest, changes chan
 	changes <- svc.Status{State: svc.StartPending}
 	// Open the config file here because we need this information in order to properly configure the ticks.
 	// But we don't want to connect to the DB at this time, because it makes our app unresponsive.
-	if err := parseConfig(*configFilePath); err != nil {
+	if err := parseConfig(configFilePath); err != nil {
 		elog.Error(1, fmt.Sprintf("VMRSync failed to open config: %v", err))
 		return
 	}

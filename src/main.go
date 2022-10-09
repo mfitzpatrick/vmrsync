@@ -12,10 +12,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-var configFilePath = flag.String("config-file", ".config.yml", "Configuration YAML file")
+var configFilePath string
 
-func init() {
+func setupFlags() {
+	var cfp = flag.String("config-file", ".config.yml", "Configuration YAML file")
 	flag.Parse()
+	configFilePath = *cfp
 }
 
 // Error type returned by the run() function in main.go
@@ -54,7 +56,7 @@ func openDB() (*sql.DB, error) {
 }
 
 func setup() (*sql.DB, func(), error) {
-	if err := parseConfig(*configFilePath); err != nil {
+	if err := parseConfig(configFilePath); err != nil {
 		return nil, nil, errors.Wrapf(err, "Config parsing failed")
 	} else if db, err := openDB(); err != nil {
 		return nil, nil, errors.Wrapf(err, "Unable to open DB")
@@ -90,6 +92,7 @@ func run(db *sql.DB) []error {
 }
 
 func main() {
+	setupFlags()
 	// Run an infinite loop reading data from TripWatch and synchronising it with the
 	// Firebird DB.
 	// NB: this function is conditionally linked due to tags issued at build time.
