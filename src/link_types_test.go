@@ -318,3 +318,30 @@ func TestPropulsionUpdateFromEngineQTY(t *testing.T) {
 	assert.Nil(t, p.UpdateFromEngineQTY(qty))
 	assert.Equal(t, PropulsionEnum("Kayak"), p)
 }
+
+func TestJobSource(t *testing.T) {
+	var j JobSource
+	err := (&j).UnmarshalJSON([]byte(`"VMR"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Base", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"Water Police"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Police", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"Land Police"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Police", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"Ambulance Service"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "QAS", string(j))
+}
+
+func TestJobSourceToJobFreq(t *testing.T) {
+	assert.Equal(t, JobFreq("Telephone"), JobSource("QAS").ToJobFreq())
+	assert.Equal(t, JobFreq("Unit Counter Enquiry"), JobSource("Base").ToJobFreq())
+
+	// Ensure no change is made if there's nothing pre-filled
+	assert.Equal(t, JobFreq(""), JobSource("QFES").ToJobFreq())
+}

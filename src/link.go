@@ -87,6 +87,8 @@ type Job struct {
 	SeaState    SeaStateEnum    `firebird:"JOBSEAS" len:"20" json:"activationsobservedseastate"`
 	Commercial  CustomBool      `firebird:"JOBCOMMERCIALVESSEL" len:"1"`
 	Pos         GPS             `json:"activationsposition"`
+	ActivatedBy JobSource       `firebird:"JOBACTIVATION" len:"20" json:"activationssource"`
+	Freq        JobFreq         `firebird:"JOBFREQUENCY" len:"30"`
 	VMRVessel
 	AssistedVessel
 	Emergency
@@ -574,3 +576,35 @@ func (p *PropulsionEnum) UpdateFromEngineQTY(qty int) error {
 	}
 	return nil
 }
+
+type JobSource string
+
+func (j *JobSource) UnmarshalJSON(bytes []byte) error {
+	var js string
+	if err := json.Unmarshal(bytes, &js); err != nil {
+		return errors.Wrapf(err, "JobSource parse JSON '%s'", string(bytes))
+	} else {
+		switch js {
+		case "Water Police", "Land Police":
+			*j = "Police"
+		case "Ambulance Service":
+			*j = "QAS"
+		default:
+			*j = "Base"
+		}
+	}
+	return nil
+}
+
+func (j JobSource) ToJobFreq() JobFreq {
+	var jf JobFreq
+	switch j {
+	case "QAS":
+		jf = "Telephone"
+	case "Base":
+		jf = "Unit Counter Enquiry"
+	}
+	return jf
+}
+
+type JobFreq string

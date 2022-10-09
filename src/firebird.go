@@ -539,9 +539,18 @@ func aggregateFields(data *linkActivationDB) error {
 			return errors.Wrapf(err, "aggregateFields for vessel propulsion")
 		}
 	}
+
+	// Automate actions and job source/frequency
 	if (data.Job.Action == JobAction("") || data.Job.Action == JobAction("Other")) &&
 		data.Job.Type != JobType("") {
 		data.Job.Action = data.Job.Type.ToJobAction()
+	}
+	if data.Job.Type == JobType("Training/Patrol") {
+		data.Job.ActivatedBy = JobSource("Base")
+		data.Job.Freq = data.Job.ActivatedBy.ToJobFreq()
+	} else if data.Job.Type == JobType("Medical") {
+		data.Job.ActivatedBy = JobSource("QAS")
+		data.Job.Freq = data.Job.ActivatedBy.ToJobFreq()
 	}
 
 	return nil

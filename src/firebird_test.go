@@ -256,6 +256,27 @@ func TestAggregateFields(t *testing.T) {
 	err = aggregateFields(data)
 	assert.Nil(t, err)
 	assert.Equal(t, JobAction("Medivac"), data.Job.Action)
+
+	// Check activation type and frequency are right for training
+	data = &linkActivationDB{
+		Job: Job{
+			Type: "Training/Patrol",
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, JobSource("Base"), data.Job.ActivatedBy)
+	assert.Equal(t, JobFreq("Unit Counter Enquiry"), data.Job.Freq)
+	// And QAS
+	data = &linkActivationDB{
+		Job: Job{
+			Type: "Medical",
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, JobSource("QAS"), data.Job.ActivatedBy)
+	assert.Equal(t, JobFreq("Telephone"), data.Job.Freq)
 }
 
 func TestSetGPS(t *testing.T) {
