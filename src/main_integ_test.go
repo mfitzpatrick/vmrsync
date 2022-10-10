@@ -5,23 +5,15 @@ package main
 import (
 	"context"
 	"database/sql"
-	"log"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var realDB *sql.DB
-
 func init() {
-	if db, err := openDB(); err != nil {
-		log.Fatalf("DB Open failed: %v", err)
-	} else if err := db.Ping(); err != nil {
-		log.Fatalf("No connection to DB: %v", err)
-	} else {
-		realDB = db
-	}
+	// Set a flag which will cause TestMain to connect to the DB.
+	shouldOpenDB = true
 }
 
 func TestIntegDBQuery(t *testing.T) {

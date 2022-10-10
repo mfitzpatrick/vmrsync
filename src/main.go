@@ -14,10 +14,8 @@ import (
 
 var configFilePath string
 
-func setupFlags() {
-	var cfp = flag.String("config-file", ".config.yml", "Configuration YAML file")
-	flag.Parse()
-	configFilePath = *cfp
+func init() {
+	flag.StringVar(&configFilePath, "config-file", ".config.yml", "Configuration YAML file")
 }
 
 // Error type returned by the run() function in main.go
@@ -92,7 +90,7 @@ func run(db *sql.DB) []error {
 }
 
 func main() {
-	setupFlags()
+	flag.Parse()
 	// Run an infinite loop reading data from TripWatch and synchronising it with the
 	// Firebird DB.
 	// NB: this function is conditionally linked due to tags issued at build time.

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"database/sql"
+	"flag"
+	"log"
 	"os"
 	"strings"
 	"testing"
@@ -8,6 +11,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
+)
+
+// Variables used by integration tests (but need to be defined here so code compiles).
+var (
+	realDB       *sql.DB
+	shouldOpenDB bool // Flag controlled by main_integ_test.go:init()
 )
 
 // Helper function to parse an RFC3339-formatted time string and automatically handle the error.
@@ -33,7 +42,16 @@ func getTimeFromAEST(t *testing.T, ts string) time.Time {
 // As-per golang testing docs, we need to explicitly call the flag.Parse function from a TestMain()
 // instance if any of our tests depend on application flags (which we do for config file parsing).
 func TestMain(m *testing.M) {
-	setupFlags()
+	flag.Parse()
+	if shouldOpenDB {
+		// Integration tests have compile-time requested that we open the DB before running.
+		if db, closefunc, err := setup(); err != nil {
+			log.Fatalf("Failed to set up DB: %v", err)
+		} else {
+			defer closefunc()
+			realDB = db
+		}
+	}
 	os.Exit(m.Run())
 }
 

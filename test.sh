@@ -67,7 +67,7 @@ fi
 
 if [ "$test_type" = "unit" ]; then
     cd "$BASE/src"
-    go test . -config-file="$BASE/tripwatch-test/test-config.yml"
+    go test
     exit $?
 fi
 
