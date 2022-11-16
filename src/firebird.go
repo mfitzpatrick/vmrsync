@@ -660,10 +660,13 @@ func sendToDB(ctx context.Context, db *sql.DB, data *linkActivationDB) error {
 		return errors.Wrapf(err, "sendToDB failed to aggregate fields")
 	}
 
-	// Map this to an existing DutyLog table entry
+	// Fetch the latest DutyLog table entry
 	if dl, err := getLatestDutyLogEntry(ctx, db); err != nil {
 		return errors.Wrapf(err, "sendToDB failed to get duty log entry")
 	} else {
+		// We set the DutyLogID field to the latest table entry, but this is
+		// only propagated to the DB when the record is inserted because the
+		// field is marked as an ID field.
 		data.Job.DutyLogID = dl.DutyLog.ID
 	}
 

@@ -407,3 +407,71 @@ func TestSendToDB_NewRecord(t *testing.T) {
 		assert.False(t, rows.Next())
 	}
 }
+
+func TestSendToDB_UpdatedRecordStaysWithDutyLogID(t *testing.T) {
+	var dutySeq int
+	var jobSeq int
+	// Create DB record
+	dbObj := &linkActivationDB{
+		Job: Job{
+			StartTime: CustomJSONTime(getTimeFromAEST(t, "2022-01-01T12:00:35+10:00")),
+			SeaState:  "calm",
+			VMRVessel: VMRVessel{
+				ID:   2,
+				Name: "MR2",
+			},
+		},
+	}
+	err := sendToDB(context.Background(), realDB, dbObj)
+	assert.Nil(t, err)
+
+	// Check that the correct duty log ID was automatically assigned
+	rows, err := realDB.QueryContext(context.Background(),
+		"SELECT JOBDUTYSEQUENCE,JOBJOBSEQUENCE FROM DUTYJOBS"+
+			" WHERE JOBTIMEOUT='2022-01-01 12:00:35' AND JOBDUTYVESSELNAME='MR2'")
+	if assert.Nil(t, err) {
+		defer rows.Close()
+		assert.True(t, rows.Next())
+		err = rows.Scan(&dutySeq, &jobSeq)
+		assert.Nil(t, err)
+		assert.Equal(t, 2, dutySeq)
+		assert.Less(t, 0, jobSeq)
+		assert.False(t, rows.Next())
+	}
+
+	// Add a new duty log entry
+	result, err := realDB.ExecContext(context.Background(),
+		"INSERT INTO DUTYLOG (DUTYSEQUENCE,DUTYDATE,CREW,SKIPPER) VALUES"+
+			" (?,'2022-01-07','BLACK',1)", dutySeq+1)
+	if assert.Nil(t, err) {
+		rowCount, err := result.RowsAffected()
+		assert.Nil(t, err)
+		assert.Equal(t, 1, int(rowCount))
+	}
+
+	// Update previous job record
+	dbObj.Job.Type = "Training"
+	dbObj.Job.Action = "Training"
+	err = sendToDB(context.Background(), realDB, dbObj)
+	assert.Nil(t, err)
+
+	// Check that the DB was correctly updated and the duty sequence number was not updated
+	rows, err = realDB.QueryContext(context.Background(),
+		"SELECT JOBDUTYSEQUENCE,JOBJOBSEQUENCE,JOBACTIONTAKEN,JOBTYPE FROM DUTYJOBS"+
+			" WHERE JOBTIMEOUT='2022-01-01 12:00:35' AND JOBDUTYVESSELNAME='MR2'")
+	if assert.Nil(t, err) {
+		defer rows.Close()
+		assert.True(t, rows.Next())
+		var dutyseq, jobseq int
+		var action, jtype sql.NullString
+		err = rows.Scan(&dutyseq, &jobseq, &action, &jtype)
+		assert.Nil(t, err)
+		assert.Equal(t, dutySeq, dutyseq)
+		assert.Equal(t, jobSeq, jobseq)
+		assert.True(t, action.Valid)
+		assert.True(t, jtype.Valid)
+		assert.Equal(t, "Training", strings.TrimSpace(action.String))
+		assert.Equal(t, "Training", strings.TrimSpace(jtype.String))
+		assert.False(t, rows.Next())
+	}
+}

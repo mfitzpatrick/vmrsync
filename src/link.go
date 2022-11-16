@@ -72,7 +72,7 @@ type Weather struct {
 }
 
 type Job struct {
-	DutyLogID   int             `firebird:"JOBDUTYSEQUENCE"`
+	DutyLogID   int             `firebird:"JOBDUTYSEQUENCE,id"` //NB: hacky use of the `id` label. Don't change order.
 	ID          int             `firebird:"JOBJOBSEQUENCE,id"`
 	Status      string          `json:"activationsstatus"`
 	StartTime   CustomJSONTime  `firebird:"JOBTIMEOUT,match" json:"activationsrvdeparttime"`
