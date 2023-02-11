@@ -182,7 +182,7 @@ func TestAggregateFields(t *testing.T) {
 	}
 	err = aggregateFields(data)
 	assert.Nil(t, err)
-	assert.Equal(t, PropulsionEnum("Twin Outboard"), data.Job.AssistedVessel.Propulsion)
+	assert.Equal(t, PropulsionEnum("Twin Outboards"), data.Job.AssistedVessel.Propulsion)
 	data = &linkActivationDB{
 		Job: Job{
 			AssistedVessel: AssistedVessel{
@@ -194,7 +194,7 @@ func TestAggregateFields(t *testing.T) {
 	}
 	err = aggregateFields(data)
 	assert.Nil(t, err)
-	assert.Equal(t, PropulsionEnum("Twin Inboard"), data.Job.AssistedVessel.Propulsion)
+	assert.Equal(t, PropulsionEnum("Twin Inboards"), data.Job.AssistedVessel.Propulsion)
 	data = &linkActivationDB{
 		Job: Job{
 			AssistedVessel: AssistedVessel{

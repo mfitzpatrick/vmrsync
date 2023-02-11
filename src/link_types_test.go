@@ -325,14 +325,14 @@ func TestPropulsionUpdateFromEngineQTY(t *testing.T) {
 	assert.Equal(t, PropulsionEnum("Single Inboard"), p)
 	qty = 2
 	assert.Nil(t, p.UpdateFromEngineQTY(qty))
-	assert.Equal(t, PropulsionEnum("Twin Inboard"), p)
+	assert.Equal(t, PropulsionEnum("Twin Inboards"), p)
 	qty = 6
 	assert.Nil(t, p.UpdateFromEngineQTY(qty))
-	assert.Equal(t, PropulsionEnum("Twin Inboard"), p)
+	assert.Equal(t, PropulsionEnum("Twin Inboards"), p)
 	p = PropulsionEnum("Inboard")
 	qty = 2
 	assert.Nil(t, p.UpdateFromEngineQTY(qty))
-	assert.Equal(t, PropulsionEnum("Twin Inboard"), p)
+	assert.Equal(t, PropulsionEnum("Twin Inboards"), p)
 
 	p = PropulsionEnum("Single Outboard")
 	qty = 1
@@ -340,11 +340,11 @@ func TestPropulsionUpdateFromEngineQTY(t *testing.T) {
 	assert.Equal(t, PropulsionEnum("Single Outboard"), p)
 	qty = 2
 	assert.Nil(t, p.UpdateFromEngineQTY(qty))
-	assert.Equal(t, PropulsionEnum("Twin Outboard"), p)
+	assert.Equal(t, PropulsionEnum("Twin Outboards"), p)
 	p = PropulsionEnum("Single Outboard")
 	qty = 6
 	assert.Nil(t, p.UpdateFromEngineQTY(qty))
-	assert.Equal(t, PropulsionEnum("Twin Outboard"), p)
+	assert.Equal(t, PropulsionEnum("Twin Outboards"), p)
 
 	p = PropulsionEnum("Sail")
 	qty = 19

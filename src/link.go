@@ -581,11 +581,13 @@ func (p *PropulsionEnum) UnmarshalJSON(bytes []byte) error {
 
 func (p *PropulsionEnum) UpdateFromEngineQTY(qty int) error {
 	var prefix string
+	var plural string
 	switch qty {
 	case 1:
 		prefix = "Single"
 	default:
 		prefix = "Twin"
+		plural = "s"
 	}
 	var suffix string
 	if strings.Contains(string(*p), "Outboard") {
@@ -594,7 +596,7 @@ func (p *PropulsionEnum) UpdateFromEngineQTY(qty int) error {
 		suffix = "Inboard"
 	}
 	if suffix != "" {
-		*p = PropulsionEnum(fmt.Sprintf("%s %s", prefix, suffix))
+		*p = PropulsionEnum(fmt.Sprintf("%s %s%s", prefix, suffix, plural))
 	}
 	return nil
 }
