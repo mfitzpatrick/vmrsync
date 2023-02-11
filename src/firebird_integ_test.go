@@ -259,6 +259,17 @@ func TestSendToDB_ExistingRecord(t *testing.T) {
 	assert.Nil(t, err)
 	err = dbObj.Job.dbMatchesCrewList(context.Background(), realDB, jobID)
 	assert.NotNil(t, err)
+
+	// Ensure a previous job hasn't been modified as a result of the above
+	err = Job{
+		VMRVessel: VMRVessel{
+			Master: "marvin.the.martian@mrq.org.au",
+			CrewList: StringList{
+				"tasmanian.devil@mrq.org.au",
+			},
+		},
+	}.dbMatchesCrewList(context.Background(), realDB, 2)
+	assert.Nil(t, err)
 }
 
 func TestSendToDB_NewRecord(t *testing.T) {
