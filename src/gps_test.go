@@ -70,6 +70,11 @@ func TestGPS(t *testing.T) {
 	err = (&g).UnmarshalJSON([]byte(`"  0   "`))
 	assert.Nil(t, err)
 	assert.Equal(t, GPS{Lat: 0, Long: 0}, g)
+
+	// Check NULL-value handling
+	err = (&g).UnmarshalJSON([]byte(`null`))
+	assert.Nil(t, err)
+	assert.Equal(t, GPS{Lat: 0, Long: 0}, g)
 }
 
 func TestDMSFromDD(t *testing.T) {

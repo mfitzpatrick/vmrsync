@@ -35,6 +35,11 @@ func (g *GPS) UnmarshalJSON(bytes []byte) error {
 			rawString = unquotedString
 		}
 	}
+	if rawString == "null" {
+		g.Lat = 0
+		g.Long = 0
+		return nil
+	}
 
 	// Split string into pieces based on spaces or commas
 	if floats, err := pullFloatsFromString(rawString); err != nil {
