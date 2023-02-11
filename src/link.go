@@ -548,11 +548,21 @@ func (b *BoatTypeEnum) UnmarshalJSON(bytes []byte) error {
 type PropulsionEnum string
 
 func (p *PropulsionEnum) UnmarshalJSON(bytes []byte) error {
+	if string(bytes) == "null" {
+		// Special case - ignore NULL
+		*p = PropulsionEnum("")
+		return nil
+	}
 	var pn string
 	if err := json.Unmarshal(bytes, &pn); err != nil {
 		return errors.Wrapf(err, "PropulsionEnum parse JSON '%s'", string(bytes))
 	} else {
 		pn = strings.ToLower(pn)
+		if len(strings.TrimSpace(pn)) == 0 {
+			// Special case - ignore empty string
+			*p = PropulsionEnum("")
+			return nil
+		}
 		switch {
 		case strings.Contains(pn, "outboard"):
 			*p = "Single Outboard"
