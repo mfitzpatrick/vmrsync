@@ -255,15 +255,25 @@ func (i *IntString) UnmarshalJSON(bytes []byte) error {
 type LengthEnum string // Firebird enumerated length range
 
 func (l *LengthEnum) UnmarshalJSON(bytes []byte) error {
+	const FT_CONV_FACTOR = 0.3048
 	rawString := strings.Trim(strings.TrimSpace(string(bytes)), "\"")
 	if rawString == "null" {
 		// Special case - ignore NULL
 		*l = LengthEnum("")
 		return nil
 	}
+	// Check for units indicator of ' or m trailing characters
+	isFeet := false
+	if strings.HasSuffix(rawString, "'") {
+		isFeet = true
+	}
+	rawString = strings.TrimRight(rawString, "m' ") // Remove feet or metres indicator character
 	if val, err := strconv.ParseFloat(rawString, 32); err != nil {
 		return errors.Wrapf(err, "unmarshal LengthEnum %s", string(bytes))
 	} else {
+		if isFeet {
+			val = val * FT_CONV_FACTOR
+		}
 		// Set length in metres to a string enum representing the range it lies in
 		lenRange := ""
 		switch length := val; {
@@ -523,7 +533,7 @@ func (b *BoatTypeEnum) UnmarshalJSON(bytes []byte) error {
 			*b = "PWC"
 		case strings.Contains(bn, "yacht"), strings.Contains(bn, "sail"),
 			strings.Contains(bn, "ketch"), strings.Contains(bn, "schooner"):
-			*b = "Sail"
+			*b = "Sailing"
 		case strings.Contains(bn, "kayak"), strings.Contains(bn, "paddle"):
 			*b = "Paddle"
 		default:
@@ -551,7 +561,7 @@ func (p *PropulsionEnum) UnmarshalJSON(bytes []byte) error {
 		case strings.Contains(pn, "paddle"), strings.Contains(pn, "oar"):
 			*p = "Oars"
 		case strings.Contains(pn, "wind"), strings.Contains(pn, "sail"):
-			*p = "Sail"
+			*p = "Sailing"
 		default:
 			*p = "Single Outboard"
 		}

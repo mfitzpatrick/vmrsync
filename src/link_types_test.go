@@ -55,6 +55,18 @@ func TestLengthEnumUnmarshal(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "4.5m - 8m", string(l))
 
+	err = (&l).UnmarshalJSON([]byte("15m"))
+	assert.Nil(t, err)
+	assert.Equal(t, "15m - 25m", string(l))
+
+	err = (&l).UnmarshalJSON([]byte("15'"))
+	assert.Nil(t, err)
+	assert.Equal(t, "4.5m - 8m", string(l))
+
+	err = (&l).UnmarshalJSON([]byte("30  '"))
+	assert.Nil(t, err)
+	assert.Equal(t, "8m - 10m", string(l))
+
 	err = (&l).UnmarshalJSON([]byte(" \"15"))
 	assert.Nil(t, err)
 	assert.Equal(t, "15m - 25m", string(l))
@@ -221,19 +233,19 @@ func TestBoatTypeEnum(t *testing.T) {
 
 	err = (&b).UnmarshalJSON([]byte(`"Sailing Catamaran"`))
 	assert.Nil(t, err)
-	assert.Equal(t, "Sail", string(b))
+	assert.Equal(t, "Sailing", string(b))
 
 	err = (&b).UnmarshalJSON([]byte(`"double-masted YachT"`))
 	assert.Nil(t, err)
-	assert.Equal(t, "Sail", string(b))
+	assert.Equal(t, "Sailing", string(b))
 
 	err = (&b).UnmarshalJSON([]byte(`"KETCH"`))
 	assert.Nil(t, err)
-	assert.Equal(t, "Sail", string(b))
+	assert.Equal(t, "Sailing", string(b))
 
 	err = (&b).UnmarshalJSON([]byte(`"Schooner"`))
 	assert.Nil(t, err)
-	assert.Equal(t, "Sail", string(b))
+	assert.Equal(t, "Sailing", string(b))
 
 	err = (&b).UnmarshalJSON([]byte(`"The most common type"`))
 	assert.Nil(t, err)
@@ -262,7 +274,7 @@ func TestPropulsionTypeEnum(t *testing.T) {
 	var p PropulsionEnum
 	err := (&p).UnmarshalJSON([]byte(`"sail"`))
 	assert.Nil(t, err)
-	assert.Equal(t, "Sail", string(p))
+	assert.Equal(t, "Sailing", string(p))
 
 	err = (&p).UnmarshalJSON([]byte(`"Single OUTBOARD"`))
 	assert.Nil(t, err)
@@ -287,11 +299,11 @@ func TestPropulsionTypeEnum(t *testing.T) {
 
 	err = (&p).UnmarshalJSON([]byte(`"WIND"`))
 	assert.Nil(t, err)
-	assert.Equal(t, "Sail", string(p))
+	assert.Equal(t, "Sailing", string(p))
 
 	err = (&p).UnmarshalJSON([]byte(`"SAILING"`))
 	assert.Nil(t, err)
-	assert.Equal(t, "Sail", string(p))
+	assert.Equal(t, "Sailing", string(p))
 }
 
 func TestPropulsionUpdateFromEngineQTY(t *testing.T) {
