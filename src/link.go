@@ -571,7 +571,7 @@ func (p *PropulsionEnum) UnmarshalJSON(bytes []byte) error {
 		case strings.Contains(pn, "paddle"), strings.Contains(pn, "oar"):
 			*p = "Oars"
 		case strings.Contains(pn, "wind"), strings.Contains(pn, "sail"):
-			*p = "Sailing"
+			*p = "Sail"
 		default:
 			*p = "Single Outboard"
 		}

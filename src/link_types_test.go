@@ -274,7 +274,7 @@ func TestPropulsionTypeEnum(t *testing.T) {
 	var p PropulsionEnum
 	err := (&p).UnmarshalJSON([]byte(`"sail"`))
 	assert.Nil(t, err)
-	assert.Equal(t, "Sailing", string(p))
+	assert.Equal(t, "Sail", string(p))
 
 	err = (&p).UnmarshalJSON([]byte(`"Single OUTBOARD"`))
 	assert.Nil(t, err)
@@ -299,11 +299,11 @@ func TestPropulsionTypeEnum(t *testing.T) {
 
 	err = (&p).UnmarshalJSON([]byte(`"WIND"`))
 	assert.Nil(t, err)
-	assert.Equal(t, "Sailing", string(p))
+	assert.Equal(t, "Sail", string(p))
 
 	err = (&p).UnmarshalJSON([]byte(`"SAILING"`))
 	assert.Nil(t, err)
-	assert.Equal(t, "Sailing", string(p))
+	assert.Equal(t, "Sail", string(p))
 
 	// Check that a NULL or empty field is ignored
 	p = PropulsionEnum("")
