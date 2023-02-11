@@ -266,7 +266,7 @@ func TestAggregateFields(t *testing.T) {
 	err = aggregateFields(data)
 	assert.Nil(t, err)
 	assert.Equal(t, JobSource("Base"), data.Job.ActivatedBy)
-	assert.Equal(t, JobFreq("Unit Counter Enquiry"), data.Job.Freq)
+	assert.Equal(t, JobFreq("Unit Counter Inquiry"), data.Job.Freq)
 	// And QAS
 	data = &linkActivationDB{
 		Job: Job{

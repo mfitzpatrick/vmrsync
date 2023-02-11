@@ -366,7 +366,7 @@ func TestJobSource(t *testing.T) {
 
 func TestJobSourceToJobFreq(t *testing.T) {
 	assert.Equal(t, JobFreq("Telephone"), JobSource("QAS").ToJobFreq())
-	assert.Equal(t, JobFreq("Unit Counter Enquiry"), JobSource("Base").ToJobFreq())
+	assert.Equal(t, JobFreq("Unit Counter Inquiry"), JobSource("Base").ToJobFreq())
 
 	// Ensure no change is made if there's nothing pre-filled
 	assert.Equal(t, JobFreq(""), JobSource("QFES").ToJobFreq())

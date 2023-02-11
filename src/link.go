@@ -614,7 +614,7 @@ func (j JobSource) ToJobFreq() JobFreq {
 	case "QAS":
 		jf = "Telephone"
 	case "Base":
-		jf = "Unit Counter Enquiry"
+		jf = "Unit Counter Inquiry"
 	}
 	return jf
 }
