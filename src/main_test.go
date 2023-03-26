@@ -17,7 +17,18 @@ import (
 var (
 	realDB       *sql.DB
 	shouldOpenDB bool // Flag controlled by main_integ_test.go:init()
+	fakeNow      time.Time
 )
+
+func init() {
+	now = func() time.Time {
+		if fakeNow.IsZero() {
+			return time.Now()
+		} else {
+			return fakeNow
+		}
+	}
+}
 
 // Helper function to parse an RFC3339-formatted time string and automatically handle the error.
 func getTime(t *testing.T, ts string) time.Time {
@@ -37,6 +48,11 @@ func getTimeFromAEST(t *testing.T, ts string) time.Time {
 	tm, err := time.ParseInLocation(time.RFC3339, ts, tz)
 	assert.Nil(t, err)
 	return tm.UTC()
+}
+
+// For testing, set the value of the 'now' function to 'mock' time.Now
+func setNow(tm time.Time) {
+	fakeNow = tm
 }
 
 // As-per golang testing docs, we need to explicitly call the flag.Parse function from a TestMain()

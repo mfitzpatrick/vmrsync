@@ -12,6 +12,8 @@ import (
 	"github.com/pkg/errors"
 )
 
+var lastUpdatedTS time.Time
+var now = time.Now
 var configFilePath string
 
 func init() {
@@ -71,7 +73,7 @@ func run(db *sql.DB) []error {
 	// Shouldn't take more than 60s to perform the whole update (read and write)
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	if activations, err := listActivations(ctx); err != nil {
+	if activations, err := listActivations(ctx, lastUpdatedTS.Add(-60*time.Second)); err != nil {
 		errlist = append(errlist, errors.Wrapf(err, "List TripWatch activations"))
 	} else {
 		for i, _ := range activations {
@@ -86,6 +88,7 @@ func run(db *sql.DB) []error {
 			}
 		}
 	}
+	lastUpdatedTS = now().UTC()
 	return errlist
 }
 

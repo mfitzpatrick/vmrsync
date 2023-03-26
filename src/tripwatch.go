@@ -38,9 +38,10 @@ func tripwatchCall(ctx context.Context, method, url, body string) (*http.Respons
 	}
 }
 
-func listActivations(ctx context.Context) ([]linkActivationDB, error) {
+func listActivations(ctx context.Context, lastUpdatedTS time.Time) ([]linkActivationDB, error) {
 	ids := []struct {
-		ID int `json:"id"`
+		ID      int            `json:"id"`
+		Updated CustomJSONTime `json:"updated_at"`
 	}{}
 	if resp, err := tripwatchCall(ctx, http.MethodGet, "/activations/recent", ""); err != nil {
 		return []linkActivationDB{}, errors.Wrapf(err, "list activations call")
@@ -55,13 +56,16 @@ func listActivations(ctx context.Context) ([]linkActivationDB, error) {
 	} else if err := json.Unmarshal([]byte(body), &ids); err != nil {
 		return []linkActivationDB{}, errors.Wrapf(err, "list activations body parse")
 	} else {
-		actList := make([]linkActivationDB, len(ids))
-		for i, v := range ids {
+		actList := make([]linkActivationDB, 0, len(ids))
+		for _, v := range ids {
+			if time.Time(v.Updated).Before(lastUpdatedTS) {
+				continue
+			}
 			if a, err := getOneActivation(ctx, v.ID); err != nil {
 				return []linkActivationDB{},
 					errors.Wrapf(err, "list activations get activation %d", v.ID)
 			} else {
-				actList[i] = a
+				actList = append(actList, a)
 			}
 		}
 		return actList, nil
