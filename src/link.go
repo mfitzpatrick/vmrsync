@@ -264,10 +264,11 @@ func (l *LengthEnum) UnmarshalJSON(bytes []byte) error {
 	}
 	// Check for units indicator of ' or m trailing characters
 	isFeet := false
-	if strings.HasSuffix(rawString, "'") || strings.HasSuffix(rawString, "\u2019") {
+	if strings.HasSuffix(rawString, "'") || strings.HasSuffix(rawString, "\u2019") ||
+		strings.HasSuffix(rawString, "f") {
 		isFeet = true
 	}
-	rawString = strings.TrimRight(rawString, "m'\u2019 ") // Remove feet or metres indicator character
+	rawString = strings.TrimRight(rawString, "mf'\u2019 ") // Remove feet or metres indicator character
 	if val, err := strconv.ParseFloat(rawString, 32); err != nil {
 		return errors.Wrapf(err, "unmarshal LengthEnum %s", string(bytes))
 	} else {

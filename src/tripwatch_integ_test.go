@@ -45,7 +45,7 @@ func TestIntegTripwatchListActivations(t *testing.T) {
 	setNow(getTimeUTC(t, "2022-05-27T01:08:00Z"))
 	list, err = listActivations(context.Background(), lastUpdatedTS)
 	assert.Nil(t, err)
-	assert.Equal(t, 2, len(list))
+	assert.Equal(t, 3, len(list))
 	assert.Equal(t, 86297, list[0].ID)
 	assert.Equal(t, "Marine Rescue 2", string(list[0].Job.VMRVessel.Name))
 	assert.Equal(t, getTime(t, "2022-05-27T00:58:00Z"), time.Time(list[0].Job.StartTime))
@@ -55,9 +55,11 @@ func TestIntegTripwatchListActivations(t *testing.T) {
 	setNow(getTimeUTC(t, "2022-03-21T09:40:01Z"))
 	list, err = listActivations(context.Background(), lastUpdatedTS)
 	assert.Nil(t, err)
-	assert.Equal(t, 3, len(list))
+	assert.Equal(t, 4, len(list))
 	assert.Equal(t, 86239, list[0].ID)
 	assert.Equal(t, "Marine Rescue 1", string(list[0].Job.VMRVessel.Name))
+	assert.Equal(t, 109138, list[3].ID)
+	assert.Equal(t, LengthEnum("10m - 15m"), list[3].Job.AssistedVessel.Length)
 }
 
 func TestIntegTripwatchGetOneActivation(t *testing.T) {

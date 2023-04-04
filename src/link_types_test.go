@@ -71,6 +71,10 @@ func TestLengthEnumUnmarshal(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, "4.5m - 8m", string(l))
 
+	err = (&l).UnmarshalJSON([]byte("30f"))
+	assert.Nil(t, err)
+	assert.Equal(t, "8m - 10m", string(l))
+
 	err = (&l).UnmarshalJSON([]byte(" \"15"))
 	assert.Nil(t, err)
 	assert.Equal(t, "15m - 25m", string(l))
