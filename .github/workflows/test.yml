@@ -22,3 +22,13 @@ jobs:
           GOARCH: amd64
         run: go build -tags service
 
+  wintest:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run Unit Tests on Windows
+        working-directory: src
+        run: go test
+
