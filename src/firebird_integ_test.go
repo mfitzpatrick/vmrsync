@@ -412,7 +412,8 @@ func TestSendToDB_NewRecord(t *testing.T) {
 		assert.Equal(t, "Calm", strings.TrimSpace(seastate))
 		assert.Equal(t, MAX_PRELOADED_SEQUENCE+3, seq)
 		assert.Equal(t,
-			"This is the comments field. This field is a large blob field that"+
+			"[Log entry maintained by TripWatch]\n"+
+				"This is the comments field. This field is a large blob field that"+
 				" contains multi-line data to be stored in the DB.",
 			strings.TrimSpace(longdesc))
 		assert.False(t, rows.Next())

@@ -553,6 +553,10 @@ func aggregateFields(data *linkActivationDB) error {
 		data.Job.Freq = data.Job.ActivatedBy.ToJobFreq()
 	}
 
+	if err := extendCommentField(data); err != nil {
+		return errors.Wrapf(err, "aggregateFields when extending the comment field")
+	}
+
 	return nil
 }
 
@@ -651,6 +655,26 @@ func setGPS(data *linkActivationDB) error {
 		return errors.Wrapf(err, "parse GPS setting from overall job pos")
 	}
 
+	return nil
+}
+
+func extendCommentField(data *linkActivationDB) error {
+	comment := strings.Builder{}
+	if _, err := comment.WriteString("[Log entry maintained by TripWatch]\n"); err != nil {
+		return errors.Wrapf(err, "extendCommentField header statement")
+	}
+	if _, err := comment.WriteString(fmt.Sprintf("%s\n\n", strings.TrimSpace(data.Job.Comments))); err != nil {
+		return errors.Wrapf(err, "extendCommentField main body")
+	}
+	for _, sitrep := range data.Sitreps {
+		entry := fmt.Sprintf("* %s AEST: %s\n",
+			sitrep.Updated.AEST().Format("15:04"),
+			strings.TrimSpace(sitrep.Comment))
+		if idx, err := comment.WriteString(entry); err != nil {
+			return errors.Wrapf(err, "extendCommentField sitrep %d", idx)
+		}
+	}
+	data.Job.Comments = comment.String()
 	return nil
 }
 

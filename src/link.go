@@ -80,7 +80,7 @@ type Job struct {
 	Type        JobType         `firebird:"JOBTYPE" len:"20" json:"activationstype"`
 	Action      JobAction       `firebird:"JOBACTIONTAKEN" len:"20" json:"activationsdvactionrequested"`
 	Purpose     string          `firebird:"JOBDETAILS" len:"96" json:"activationspurpose"`
-	Comments    string          `firebird:"JOBDETAILS_LONG" len:"500" json:"activationscomments"`
+	Comments    string          `firebird:"JOBDETAILS_LONG" len:"4096" json:"activationscomments"`
 	Donation    IntString       `firebird:"JOBDONATION" json:"activationsdonationreceived"`
 	Frequency   string          `firebird:"JOBFREQUENCY" len:"30"`
 	WaterLimits WaterLimitsEnum `firebird:"JOBWATERLIMITS" len:"20" json:"activationsoperationsareaclassification"`
@@ -194,10 +194,17 @@ func (tm CustomJSONTime) String() string {
 	return time.Time(tm).String()
 }
 
-// Convert the time object to the UTC+10 timezone before writing it to the DB.
-func (tm CustomJSONTime) Value() (driver.Value, error) {
+// Convert the time object to the UTC+10 timezone
+func (tm CustomJSONTime) AEST() time.Time {
 	tz := time.FixedZone("UTC+10", 10*60*60)
-	return time.Time(tm).In(tz), nil
+	return time.Time(tm).In(tz)
+}
+
+// Called before a CustomJSONTime object is written to the DB.
+// As the DB requires the TS to be in the AEST timezone, this first calls the AEST() function to convert
+// the time value appropriately.
+func (tm CustomJSONTime) Value() (driver.Value, error) {
+	return tm.AEST(), nil
 }
 
 type CustomBool string //TripWatch boolean contained as a string or normal bool
