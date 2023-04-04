@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Run Unit Tests on Windows
-        working-directory: src
-        run: go test
+      - name: Run tests on Windows
+        run: ./test.sh integration
+        shell: bash
 
