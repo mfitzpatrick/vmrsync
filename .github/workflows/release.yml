@@ -16,12 +16,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Build custom env
+        id: custom_env
+        run: |
+            echo "VERSION=$(basename ${{ github.ref }})" >> $GITHUB_ENV
+
       - name: Build Windows Version
         working-directory: ./src
         env:
           GOOS: windows
           GOARCH: amd64
         run: go build -tags service -o ${{ github.workspace }}/${{ env.WIN64BIN }}
+          -ldflags "-X main.Version=$VERSION"
 
       - name: Create release
         id: create_release

@@ -72,7 +72,8 @@ func (s *winsvc) Execute(args []string, r <-chan svc.ChangeRequest, changes chan
 	slowtick := time.Tick(4 * tripwatchPollFrequency)
 	tick := fasttick
 	changes <- svc.Status{State: svc.Running, Accepts: cmdsAccepted}
-	elog.Info(1, fmt.Sprintf("VMRSync execution started. Poll frequency: %s", tripwatchPollFrequency))
+	elog.Info(1, fmt.Sprintf("VMRSync %s execution started. Poll frequency: %s",
+		Version, tripwatchPollFrequency))
 
 loop:
 	for {

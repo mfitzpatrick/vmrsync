@@ -15,9 +15,12 @@ import (
 var lastUpdatedTS time.Time
 var now = time.Now
 var configFilePath string
+var printVersion bool
+var Version string = "development"
 
 func init() {
 	flag.StringVar(&configFilePath, "config-file", ".config.yml", "Configuration YAML file")
+	flag.BoolVar(&printVersion, "version", false, "Print version information and exit")
 }
 
 // Error type returned by the run() function in main.go
@@ -94,6 +97,10 @@ func run(db *sql.DB) []error {
 
 func main() {
 	flag.Parse()
+	if printVersion {
+		fmt.Println(Version)
+		return
+	}
 	// Run an infinite loop reading data from TripWatch and synchronising it with the
 	// Firebird DB.
 	// NB: this function is conditionally linked due to tags issued at build time.
