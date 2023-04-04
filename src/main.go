@@ -79,13 +79,13 @@ func run(db *sql.DB) []error {
 	if activations, err := listActivations(ctx, lastUpdatedTS.Add(-60*time.Second)); err != nil {
 		errlist = append(errlist, errors.Wrapf(err, "List TripWatch activations"))
 	} else {
-		for i, _ := range activations {
+		for i, activation := range activations {
 			if strings.ToLower(activations[i].Job.Status) == "cancelled" {
 				// Don't synchronise cancelled activations. Skip over them.
 				continue
 			} else if err := sendToDB(ctx, db, &activations[i]); err != nil {
 				errlist = append(errlist, runError{
-					error:      errors.Wrapf(err, "DB update"),
+					error:      errors.Wrapf(err, "DB update for activation %d", activation.ID),
 					activation: &activations[i],
 				})
 			}
