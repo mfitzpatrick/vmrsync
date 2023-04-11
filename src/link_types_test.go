@@ -189,6 +189,10 @@ func TestJobAction(t *testing.T) {
 	err = (&j).UnmarshalJSON([]byte(`"Broadwater Training"`))
 	assert.Nil(t, err)
 	assert.Equal(t, "Training", string(j))
+
+	err = (&j).UnmarshalJSON([]byte(`"Investigate aground boat in aldershots"`))
+	assert.Nil(t, err)
+	assert.Equal(t, "Investigate", string(j))
 }
 
 func TestWaterLimitsEnum(t *testing.T) {
@@ -386,6 +390,7 @@ func TestJobSource(t *testing.T) {
 
 func TestJobSourceToJobFreq(t *testing.T) {
 	assert.Equal(t, JobFreq("Telephone"), JobSource("QAS").ToJobFreq())
+	assert.Equal(t, JobFreq("Telephone"), JobSource("Police").ToJobFreq())
 	assert.Equal(t, JobFreq("Unit Counter Inquiry"), JobSource("Base").ToJobFreq())
 
 	// Ensure no change is made if there's nothing pre-filled

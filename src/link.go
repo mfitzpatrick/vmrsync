@@ -40,6 +40,8 @@ type AssistedVessel struct {
 	EngineQTY  int            `json:"activationsdvvesselsenginequantity"`
 	NumAdults  int            `firebird:"JOBADULTS" json:"activationsdvpobadult"`
 	NumKids    int            `firebird:"JOBCHILDREN" json:"activationsdvpobchildren"`
+	Phone      IntString      `json:"activationsdvcontactnumber"`
+	RadioChan  IntString      `json:"activationsdvradiochannel"`
 }
 
 type Emergency struct {
@@ -259,6 +261,10 @@ func (i *IntString) UnmarshalJSON(bytes []byte) error {
 	}
 }
 
+func (i IntString) IsZero() bool {
+	return i == IntString(0.0)
+}
+
 type LengthEnum string // Firebird enumerated length range
 
 func (l *LengthEnum) UnmarshalJSON(bytes []byte) error {
@@ -451,6 +457,10 @@ func (j JobType) ToJobAction() JobAction {
 	return action
 }
 
+func (j JobType) IsZero() bool {
+	return j == JobType("")
+}
+
 type JobAction string
 
 func (j *JobAction) UnmarshalJSON(bytes []byte) error {
@@ -481,11 +491,17 @@ func (j *JobAction) UnmarshalJSON(bytes []byte) error {
 			*j = JobAction("Training")
 		case strings.Contains(lja, "unground"):
 			*j = JobAction("Ungrounded")
+		case strings.Contains(lja, "investigate"):
+			*j = JobAction("Investigate")
 		default:
 			*j = JobAction("Other")
 		}
 		return nil
 	}
+}
+
+func (j JobAction) IsZero() bool {
+	return j == JobAction("")
 }
 
 type WaterLimitsEnum string
@@ -631,7 +647,7 @@ func (j *JobSource) UnmarshalJSON(bytes []byte) error {
 func (j JobSource) ToJobFreq() JobFreq {
 	var jf JobFreq
 	switch j {
-	case "QAS":
+	case "QAS", "Police":
 		jf = "Telephone"
 	case "Base":
 		jf = "Unit Counter Inquiry"
@@ -640,3 +656,7 @@ func (j JobSource) ToJobFreq() JobFreq {
 }
 
 type JobFreq string
+
+func (j JobFreq) IsZero() bool {
+	return j == JobFreq("")
+}

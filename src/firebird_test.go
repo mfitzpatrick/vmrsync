@@ -277,6 +277,29 @@ func TestAggregateFields(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, JobSource("QAS"), data.Job.ActivatedBy)
 	assert.Equal(t, JobFreq("Telephone"), data.Job.Freq)
+
+	// Check that the frequency is radio if a radio channel is set
+	data = &linkActivationDB{
+		Job: Job{
+			Type: "Other",
+			AssistedVessel: AssistedVessel{
+				RadioChan: 16,
+			},
+		},
+	}
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, JobFreq("VHF 16"), data.Job.Freq)
+	// A phone number overrides the VHF frequency
+	data.Job.AssistedVessel.Phone = 1234
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, JobFreq("Telephone"), data.Job.Freq)
+	// But not if the type is training
+	data.Job.Type = "Training/Patrol"
+	err = aggregateFields(data)
+	assert.Nil(t, err)
+	assert.Equal(t, JobFreq("Unit Counter Inquiry"), data.Job.Freq)
 }
 
 func TestSetGPS(t *testing.T) {

@@ -541,16 +541,17 @@ func aggregateFields(data *linkActivationDB) error {
 	}
 
 	// Automate actions and job source/frequency
-	if (data.Job.Action == JobAction("") || data.Job.Action == JobAction("Other")) &&
-		data.Job.Type != JobType("") {
+	if (data.Job.Action.IsZero() || data.Job.Action == JobAction("Other")) &&
+		!data.Job.Type.IsZero() {
 		data.Job.Action = data.Job.Type.ToJobAction()
 	}
 	if data.Job.Type == JobType("Training/Patrol") {
 		data.Job.ActivatedBy = JobSource("Base")
-		data.Job.Freq = data.Job.ActivatedBy.ToJobFreq()
 	} else if data.Job.Type == JobType("Medical") {
 		data.Job.ActivatedBy = JobSource("QAS")
-		data.Job.Freq = data.Job.ActivatedBy.ToJobFreq()
+	}
+	if err := aggregateJobFreq(data); err != nil {
+		return errors.Wrapf(err, "aggregateJobFreq from aggregateFields")
 	}
 
 	if err := extendCommentField(data); err != nil {
@@ -562,6 +563,17 @@ func aggregateFields(data *linkActivationDB) error {
 
 func aggregatePropulsion(vessel *AssistedVessel) error {
 	return vessel.Propulsion.UpdateFromEngineQTY(vessel.EngineQTY)
+}
+
+func aggregateJobFreq(data *linkActivationDB) error {
+	data.Job.Freq = data.Job.ActivatedBy.ToJobFreq()
+	if data.Job.Freq.IsZero() && !data.Job.AssistedVessel.Phone.IsZero() {
+		data.Job.Freq = JobFreq("Telephone")
+	}
+	if data.Job.Freq.IsZero() && !data.Job.AssistedVessel.RadioChan.IsZero() {
+		data.Job.Freq = JobFreq(fmt.Sprintf("VHF %d", int(data.Job.AssistedVessel.RadioChan)))
+	}
+	return nil
 }
 
 func parseForecast(weather *Weather) error {
