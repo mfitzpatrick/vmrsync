@@ -91,6 +91,7 @@ type Job struct {
 	Pos         GPS             `json:"activationsposition"`
 	ActivatedBy JobSource       `firebird:"JOBACTIVATION" len:"20" json:"activationssource"`
 	Freq        JobFreq         `firebird:"JOBFREQUENCY" len:"30"`
+	AssistNum   IntString       `firebird:"JOBASSISTNO" json:"activationsdonationreceiptnumber"`
 	VMRVessel
 	AssistedVessel
 	Emergency
