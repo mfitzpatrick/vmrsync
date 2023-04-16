@@ -32,10 +32,10 @@ func (g *GPS) UnmarshalJSON(bytes []byte) error {
 		if unquotedString, err := strconv.Unquote(rawString); err != nil {
 			return errors.Wrapf(err, "StringList couldn't unquote string")
 		} else {
-			rawString = unquotedString
+			rawString = strings.TrimSpace(unquotedString)
 		}
 	}
-	if rawString == "null" {
+	if rawString == "null" || rawString == "" {
 		g.Lat = 0
 		g.Long = 0
 		return nil
