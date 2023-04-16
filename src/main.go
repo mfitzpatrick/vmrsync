@@ -12,7 +12,10 @@ import (
 	"github.com/pkg/errors"
 )
 
-var lastUpdatedTS time.Time
+// When booting, initialise the 'last updated time' to the previous 12 hours. This
+// is a means of ensuring we don't pull all old jobs across if the system is crashing
+// for some significant time and then repaired.
+var lastUpdatedTS time.Time = now().UTC().Add(-12 * time.Hour)
 var now = time.Now
 var configFilePath string
 var printVersion bool
